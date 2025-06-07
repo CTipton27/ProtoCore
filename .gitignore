@@ -1,0 +1,9 @@
+vivado_project/
+*.bit
+*.log
+*.jou
+*.str
+*.runs/
+*.cache/
+*.hw/
+*.sim/
