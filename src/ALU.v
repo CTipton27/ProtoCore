@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Engineer: Conner Tipton
+// Author: Conner Tipton
 // 
 // Create Date: 06/11/2025 04:19:32 PM
 // Design Name: 8-Bit ALU
@@ -33,9 +33,9 @@ module ALU(
             3'd2: out = a & b;              //and
             3'd3: out = a | b;              //or
             3'd4: out = a ^ b;              //xor
-            3'd5: out = ~a;                   //not(a)
-            3'd6: out = {a[6:0], 1'b0};       //shl(a)
-            3'd7: out = {1'b0, a[7:1]};       //shr(a)
+            3'd5: out = ~a;                 //not(a)
+            3'd6: out = a<<1;     //shl(a)
+            3'd7: out = a>>1;     //shr(a)
             default: out = "00000000";
         endcase
         zero = (out == 8'b0);
