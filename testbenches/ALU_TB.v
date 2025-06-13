@@ -117,6 +117,7 @@ module ALU_TB();
         end
 
         // Test XOR
+        opcode = `XOR;
         for (i = 0; i < 256; i = i + 17) begin
             a = i[7:0];
             for (j = 0; j < 256; j = j + 51) begin
@@ -127,6 +128,7 @@ module ALU_TB();
         end
 
         // Test NOT (only 'a' matters)
+        opcode = `NOT;
         for (i = 0; i < 256; i = i + 17) begin
             a = i[7:0];
             #10;  // Let the outputs settle
