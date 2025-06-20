@@ -7,6 +7,10 @@ import datetime
 run_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 log_name = input("Please enter a name for the log directory: ")
 
+#Files associated with sim software. change as needed for your vivado installation
+vivado_settings_desktop = Path("D:/Vivado/2025.1/Vivado/settings64.bat")
+vivado_settings_laptop  = Path("FIXME")
+
 # Grabs all directories needed to run scripts and log files.
 root = Path(__file__).resolve().parent.parent
 script_dir = root / "scripts"
@@ -14,45 +18,68 @@ tb_dir = root / "testbenches"
 src_dir = root / "src"
 log_dir = root / "logs"
 
-# For now, the testbenches and sources do not take any inputs, and generate their own outputs.
-REG_TB = tb_dir / "REG_TB.v"
-ALU_TB = tb_dir / "ALU_TB.v"
-ALU    = src_dir / "ALU.v"
-REG    = src_dir / "Reg_File_2R1W.v"
-
-
-
 current_log_dir = log_dir / log_name
 current_log_dir.mkdir(exist_ok=True)
 
 log_file = current_log_dir / f"{log_name}_{run_time}.log"
 
-def run_cmd(cmd, capture=False):
-    print(f"Running command: {cmd}")
-    if capture:
-        with open(log_file, 'a') as f:
-            result = subprocess.run(cmd, shell = True, stdout=f, stderr=subprocess.STDOUT)
-    else:
-        result = subprocess.run(cmd, shell = True)
-    if result.returncode != 0:
-        print(f"Command failed with return code {result.returncode}")
-        sys.exit(result.returncode)
+#Modularity allows for multiple sources/tbs
+testbenches = {
+    "alu": {
+        "tb": tb_dir / "ALU_TB.v",
+        "src_files": [src_dir / "ALU.v"],
+        "xelab_opts": ["work.ALU_TB", "-s", "alu_tb_snapshot"],
+        "xsim_opts": ["alu_tb_snapshot"],
+        "log_file": "ALUlog.txt"
+    },
+    "reg_file": {
+        "tb": tb_dir / "REG_TB.v",
+        "src_files": [src_dir / "Reg_File_2R1W.v"],
+        "xelab_opts": ["work.REG_TB", "-s", "reg_tb_snapshot"],
+        "xsim_opts": ["reg_tb_snapshot"],
+        "log_file": "REGlog.txt"
+    }
+}
+
+#This section of code is specific to me, as I am running this on two different devices
+#with vivado installations in different directories.
+settings = "null"
+device = input("Which device are you on? (l/d)? ").strip().lower()
+if device == "l":
+    settings = vivado_settings_laptop
+elif device == "d":
+    settings = vivado_settings_desktop
+else:
+    print("Invalid choice")
+    sys.exit(1)
+settings = f'"{settings}"'
+choice = input("Which testbench do you want to run? (alu/reg_file)? ").strip().lower()
+
+if choice not in testbenches:
+    print("Invalid choice")
+    sys.exit(1)
+
+#Builds the command - Starts by finding all sources and testbenches needed for xvlog
+tb = testbenches[choice]["tb"]
+sources = testbenches[choice]["src_files"]
+all_files = [tb] + sources
+cmd_files = " ".join(str(f) for f in all_files)
+
+#builds xvlog, xelab, and xsim commands
+xvlog_cmd = f"xvlog {cmd_files}"
+xelab_cmd = "xelab " + " ".join(testbenches[choice]["xelab_opts"])
+xsim_cmd = "xsim " + " ".join(testbenches[choice]["xsim_opts"]) + " -runall" #Prevents clock from stalling xsim
 
 
-def cleanup():
-    if not current_log_dir.exists():
-        return
-    for item in current_log_dir.iterdir():
-        if item.suffix in (".log", ".wdb"):
-            continue
-        if item.is_dir():
-            shutil.rmtree(item)
-        elif item.is_file():
-            item.unlink()
-def __main__():
-    run_cmd(f"xvlog {REG_TB} {REG}", capture=True)
-    run_cmd(f"xelab work.REG_TB -s reg_tb_snapshot", capture=True)
-    run_cmd(f"xsim reg_tb_snapshot", capture=True)
+#joins full command for pass into subprocess.
+full_cmd = f"{settings} && {xvlog_cmd} && {xelab_cmd} && {xsim_cmd}"
 
-if __name__ == "__main__":
-    __main__()
+# Run and log output
+with open(log_file, 'a') as f:
+    result = subprocess.run(full_cmd, shell=True, stdout=f, stderr=subprocess.STDOUT)
+
+if result.returncode != 0:
+    print(f"Simulation failed with return code {result.returncode}")
+    sys.exit(result.returncode)
+else:
+    print("Simulation completed successfully.")

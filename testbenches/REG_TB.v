@@ -1,3 +1,5 @@
+`timescale 1ns/1ps
+
 module REG_TB();
     reg clk;
     reg [3:0] ra;
@@ -26,14 +28,20 @@ module REG_TB();
         clk = 0;
         forever #5 clk = ~clk; // 10ns clock period
     end
-    initial begin
-        logs = $fopen("REGLog.txt", "w");
-        if (!logs) begin
-            $display("Failed to open log file!");
-            $finish;
-        end
-        $fdisplay(logs, "REG Testbench Log");
-        $fmonitor(logs, "ra: %d | rb: %d | wa: %d | wd: %h | we: %b | read_a: %h | read_b: %h", ra, rb, wa, wd, we, read_a, read_b);
+	`ifndef LOG_PATH
+		`define LOG_PATH "REGLog.txt"  // fallback path if not passed in
+	`endif
+
+	initial begin
+		logs = $fopen(`LOG_PATH, "w");
+		if (!logs) begin
+			$display("Failed to open log file at %s", `LOG_PATH);
+			$finish;
+		end
+
+    $fdisplay(logs, "REG Testbench Log");
+    $fmonitor(logs, "ra: %d | rb: %d | wa: %d | wd: %h | we: %b | read_a: %h | read_b: %h",
+              ra, rb, wa, wd, we, read_a, read_b);
         
         wa=0;
         wd=0;

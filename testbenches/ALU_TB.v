@@ -63,7 +63,7 @@ module ALU_TB();
     end
 
     initial begin
-        logs = $fopen("log.txt", "w");
+        logs = $fopen("ALUlog.txt", "w");
         if (!logs) begin
             $display("Failed to open log file!");
             $finish;
