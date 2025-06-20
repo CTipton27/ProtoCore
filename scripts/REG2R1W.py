@@ -1,0 +1,58 @@
+import shutil
+from pathlib import Path
+import sys
+import subprocess
+import datetime
+
+run_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+log_name = input("Please enter a name for the log directory: ")
+
+# Grabs all directories needed to run scripts and log files.
+root = Path(__file__).resolve().parent.parent
+script_dir = root / "scripts"
+tb_dir = root / "testbenches"
+src_dir = root / "src"
+log_dir = root / "logs"
+
+# For now, the testbenches and sources do not take any inputs, and generate their own outputs.
+REG_TB = tb_dir / "REG_TB.v"
+ALU_TB = tb_dir / "ALU_TB.v"
+ALU    = src_dir / "ALU.v"
+REG    = src_dir / "Reg_File_2R1W.v"
+
+
+
+current_log_dir = log_dir / log_name
+current_log_dir.mkdir(exist_ok=True)
+
+log_file = current_log_dir / f"{log_name}_{run_time}.log"
+
+def run_cmd(cmd, capture=False):
+    print(f"Running command: {cmd}")
+    if capture:
+        with open(log_file, 'a') as f:
+            result = subprocess.run(cmd, shell = True, stdout=f, stderr=subprocess.STDOUT)
+    else:
+        result = subprocess.run(cmd, shell = True)
+    if result.returncode != 0:
+        print(f"Command failed with return code {result.returncode}")
+        sys.exit(result.returncode)
+
+
+def cleanup():
+    if not current_log_dir.exists():
+        return
+    for item in current_log_dir.iterdir():
+        if item.suffix in (".log", ".wdb"):
+            continue
+        if item.is_dir():
+            shutil.rmtree(item)
+        elif item.is_file():
+            item.unlink()
+def __main__():
+    run_cmd(f"xvlog {REG_TB} {REG}", capture=True)
+    run_cmd(f"xelab work.REG_TB -s reg_tb_snapshot", capture=True)
+    run_cmd(f"xsim reg_tb_snapshot", capture=True)
+
+if __name__ == "__main__":
+    __main__()
