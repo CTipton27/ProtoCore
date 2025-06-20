@@ -1,1 +1,0 @@
-"work.REG_TB" -s "reg_tb_snapshot" 

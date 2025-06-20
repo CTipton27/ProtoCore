@@ -83,3 +83,31 @@ if result.returncode != 0:
     sys.exit(result.returncode)
 else:
     print("Simulation completed successfully.")
+
+# finds log in script dir and moves it to log folder
+vivado_default_log = script_dir / testbenches[choice]["log_file"]
+if vivado_default_log.exists():
+    # Destination path for log
+    dest_log_path = current_log_dir / testbenches[choice]["log_file"]
+    try:
+        # Moves file to log folder
+        shutil.move(str(vivado_default_log), str(dest_log_path))
+        print(f"Moved log file to {dest_log_path}")
+    except Exception as e:
+        print(f"Failed to move log file: {e}")
+else:
+    print(f"Expected log file {vivado_default_log} not found.")
+
+for item in script_dir.iterdir():
+    if item.is_file():
+        if item.suffix != ".py":
+            try:
+                item.unlink()
+            except Exception as e:
+                print(f"Warning: Failed to delete file {item}: {e}")
+    elif item.is_dir():
+        if item.name != ".idea":
+            try:
+                shutil.rmtree(item)
+            except Exception as e:
+                print(f"Warning: Failed to delete directory {item}: {e}")
