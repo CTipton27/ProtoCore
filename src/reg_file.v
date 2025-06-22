@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module Reg_File_2R1W(
+module reg_file(
     input clk,
     input [3:0] ra,
     input [3:0] rb,

@@ -9,7 +9,7 @@ log_name = input("Please enter a name for the log directory: ")
 
 #Files associated with sim software. change as needed for your vivado installation
 vivado_settings_desktop = Path("D:/Vivado/2025.1/Vivado/settings64.bat")
-vivado_settings_laptop  = Path("FIXME")
+vivado_settings_laptop  = Path("C:/Xilinx/Vivado/2024.2/settings64.bat")
 
 # Grabs all directories needed to run scripts and log files.
 root = Path(__file__).resolve().parent.parent
@@ -23,7 +23,7 @@ current_log_dir.mkdir(exist_ok=True)
 
 log_file = current_log_dir / f"{log_name}_{run_time}.log"
 
-#Modularity allows for multiple sources/tbs
+#Dict allows for multiple sources/tbs
 testbenches = {
     "alu": {
         "tb": tb_dir / "ALU_TB.v",
@@ -34,7 +34,7 @@ testbenches = {
     },
     "reg_file": {
         "tb": tb_dir / "REG_TB.v",
-        "src_files": [src_dir / "Reg_File_2R1W.v"],
+        "src_files": [src_dir / "reg_file.v"],
         "xelab_opts": ["work.REG_TB", "-s", "reg_tb_snapshot"],
         "xsim_opts": ["reg_tb_snapshot"],
         "log_file": "REGlog.txt"
@@ -43,7 +43,7 @@ testbenches = {
 
 #This section of code is specific to me, as I am running this on two different devices
 #with vivado installations in different directories.
-settings = "null"
+settings = "dev/null"
 device = input("Which device are you on? (l/d)? ").strip().lower()
 if device == "l":
     settings = vivado_settings_laptop
@@ -53,6 +53,8 @@ else:
     print("Invalid choice")
     sys.exit(1)
 settings = f'"{settings}"'
+
+
 choice = input("Which testbench do you want to run? (alu/reg_file)? ").strip().lower()
 
 if choice not in testbenches:
@@ -100,13 +102,13 @@ else:
 
 for item in script_dir.iterdir():
     if item.is_file():
-        if item.suffix != ".py":
+        if item.suffix not in [".py", ".py~"]:
             try:
                 item.unlink()
             except Exception as e:
                 print(f"Warning: Failed to delete file {item}: {e}")
     elif item.is_dir():
-        if item.name != ".idea":
+        if item.name not in [".idea", ".venv"]:
             try:
                 shutil.rmtree(item)
             except Exception as e:
