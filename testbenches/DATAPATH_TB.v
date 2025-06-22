@@ -1,7 +1,5 @@
 `timescale 1ns / 1ps
 
-
-
 module DATAPATH_TB(
     );
     reg [2:0] alu_opcode;
@@ -45,7 +43,7 @@ module DATAPATH_TB(
 			$finish;
 		end
 	$fdisplay(logs, "DATAPATH Testbench Log");
-    $fmonitor(logs, "ra: %d | rb: %d | wa: %d | wd: %h | we: %b | read_a: %h | read_b: %h",
-              ra, rb, wa, wd, we, read_a, read_b);
+    $fmonitor(logs, "ra: %d | rb: %d | wa: %d | wd: %h | we: %b | read_a: %h | read_b: %h | opcode: %d | zero: %b | carry: %b |,
+              ra, rb, wa, wd, we, read_a, read_b, alu_opcode, alu_zero, alu_carry);
     end
 endmodule
