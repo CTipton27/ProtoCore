@@ -38,6 +38,13 @@ testbenches = {
         "xelab_opts": ["work.REG_TB", "-s", "reg_tb_snapshot"],
         "xsim_opts": ["reg_tb_snapshot"],
         "log_file": "REGlog.txt"
+    },
+    "datapath": {
+        "tb": tb_dir / "DATAPATH_TB.v",
+        "src_files": [src_dir / "datapath.v"],
+        "xelab_opts": ["work.DATAPATH_TB", "-s", "datapath_tb_snapshot"],
+        "xsim_opts": ["datapath_tb_snapshot"],
+        "log_file": "DATAPATHlog.txt"
     }
 }
 
@@ -55,7 +62,7 @@ else:
 settings = f'"{settings}"'
 
 
-choice = input("Which testbench do you want to run? (alu/reg_file)? ").strip().lower()
+choice = input("Which testbench do you want to run? (alu, reg_file, datapath)? ").strip().lower()
 
 if choice not in testbenches:
     print("Invalid choice")

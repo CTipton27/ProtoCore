@@ -14,7 +14,7 @@ module REG_TB();
     integer i;
 
 
-    Reg_File_2R1W DUT(
+    reg_file DUT(
         .clk(clk),
         .ra(ra),
         .rb(rb),
@@ -29,7 +29,7 @@ module REG_TB();
         forever #5 clk = ~clk; // 10ns clock period
     end
 	`ifndef LOG_PATH
-		`define LOG_PATH "REGLog.txt"  // fallback path if not passed in
+		`define LOG_PATH "REGlog.txt"  // fallback path if not passed in
 	`endif
 
 	initial begin
