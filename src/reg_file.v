@@ -16,9 +16,5 @@ module reg_file(
     assign read_a = regfile[ra];
     assign read_b = regfile[rb];
     
-    always @ (posedge clk) begin
-        if (we) begin
-            regfile[wa] <= wd;
-        end
-    end
+    always @ (posedge clk) if (we) regfile[wa] <= wd;
 endmodule

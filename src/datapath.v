@@ -2,8 +2,9 @@
 
 module datapath(
     input clk,
+    input alu_en,
     input [3:0] alu_opcode,
-    input [7:0] write_data,
+    input [7:0] user_write_data,
     input [3:0] write_addr, ra_addr, rb_addr,
     input write_en,
     output [7:0] read_a, read_b,
@@ -11,6 +12,7 @@ module datapath(
     );
     wire [7:0] ra_data, rb_data;
     wire [7:0] alu_out;
+    wire [7:0] write_data;
     
     ALU alu (
         .a(ra_data),
@@ -31,6 +33,7 @@ module datapath(
         .read_a(ra_data),
         .read_b(rb_data)
     );
-    assign read_a = ra_data;
-    assign read_b = rb_data;
+    assign read_a = (write_en && ra_addr == write_addr) ? write_data : ra_data;
+    assign read_b = (write_en && rb_addr == write_addr) ? write_data : rb_data;
+    assign write_data = alu_en ? alu_out : user_write_data;
 endmodule
