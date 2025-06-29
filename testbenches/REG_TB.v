@@ -40,8 +40,8 @@ module REG_TB();
 		end
 
     $fdisplay(logs, "REG Testbench Log");
-    $fmonitor(logs, "ra: %d | rb: %d | wa: %d | wd: %h | we: %b | read_a: %h | read_b: %h",
-              ra, rb, wa, wd, we, read_a, read_b);
+    $fmonitor(logs, "Time: %0t | ra: %d | rb: %d | wa: %d | wd: %h | we: %b | read_a: %h | read_b: %h",
+              $time, ra, rb, wa, wd, we, read_a, read_b);
         
         wa=0;
         wd=0;

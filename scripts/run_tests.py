@@ -41,7 +41,7 @@ testbenches = {
     },
     "datapath": {
         "tb": tb_dir / "DATAPATH_TB.v",
-        "src_files": [src_dir / "datapath.v"],
+        "src_files": [src_dir / "datapath.v", src_dir / "ALU.v", src_dir / "reg_file.v"],
         "xelab_opts": ["work.DATAPATH_TB", "-s", "datapath_tb_snapshot"],
         "xsim_opts": ["datapath_tb_snapshot"],
         "log_file": "DATAPATHlog.txt"

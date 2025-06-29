@@ -25,10 +25,8 @@ module DATAPATH_TB(
     
     integer logs;
     integer i;
-    reg [7:0] expected_out;
+    reg [7:0] expected_out_alu;
     reg [24:0] op_name;
-    integer j;
-    integer k;
     
     datapath DUT(
         .clk(clk),
@@ -57,13 +55,16 @@ module DATAPATH_TB(
             default: op_name = "UNK";
         endcase
     end
+    
     initial begin
         clk = 0;
         forever #5 clk = ~clk; // 10ns clock period
     end
+    
     `ifndef LOG_PATH
 		`define LOG_PATH "DATAPATHlog.txt"  // fallback path if not passed in
 	`endif
+	
 	initial begin
 		logs = $fopen(`LOG_PATH, "w");
 		if (!logs) begin
@@ -71,73 +72,115 @@ module DATAPATH_TB(
 			$finish;
 		end
 	$fdisplay(logs, "DATAPATH Testbench Log");
-    $fmonitor(logs, "ra: %d | rb: %d | wa: %d | uwd: %h | we: %b | read_a: %h | read_b: %h | opcode: %d | zero: %b | carry: %b |",
-              ra_addr, rb_addr, write_addr, user_write_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry);
+    $fmonitor(logs, "Time: %0t | ra: %d | rb: %d | wa: %d | uwd: %h | we: %b | read_a: %h | read_b: %h | opcode: %d | zero: %b | carry: %b |",
+              $time, ra_addr, rb_addr, write_addr, user_write_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry);
               
-        write_addr=0;
-        user_write_data=0;
-        ra_addr=0;
-        rb_addr=0;
-        write_en = 0;
+        //Initialize all inputs to 0.
+        alu_opcode = 0;
         alu_en = 0;
+        ra_addr = 0;
+        rb_addr = 0;
+        write_addr = 0;
+        user_write_data = 0;
+        write_en = 0;
         @(posedge clk);
         
 //----------------------DEFAULT REG FUNCTIONS----------------------------//
         // Write unique values to every register
-        write_en = 1;
         for (i = 0; i < 16; i = i + 1) begin
-            write_addr = i[3:0];
+            @(negedge clk);
+            write_en = 1;
+            write_addr = i;
             user_write_data = i * 8'h11; // 0x00, 0x11, ..., 0xFF
             @(posedge clk);
         end
         
+        @(negedge clk)
         write_en = 0;
-        @(posedge clk);
+        
         // Read back and verify
         for (i = 0; i < 16; i = i + 1) begin
-            ra_addr = i[3:0];
-            rb_addr = (15 - i) & 4'hF; // test independent reads
-            @(posedge clk);
+            ra_addr = i;
+            rb_addr = 15 - i;
+            #3; //testing asynchronous reads
         end
         
         // Overwrite test
+        @(negedge clk);
         write_en = 1;
-        write_addr = 4'd3;
+        write_addr = 3;
         user_write_data = 8'hAA;
         @(posedge clk);
+        
+        @(negedge clk);
         write_en = 0;
-
-        ra_addr = 4'd3;
-        rb_addr = 4'd3;
+        #2;
+        ra_addr = 3;
+        rb_addr = 3;
         @(posedge clk);
         
-          // Read without write enable (should not change data)
-        write_addr = 4'd5;
+        // Read without write enable (should not change data)
+        @(negedge clk);
+        write_addr = 5;
         user_write_data = 8'h11;
         write_en = 0;
         @(posedge clk); // No write should occur
 
-        ra_addr = 4'd5;
+        ra_addr = 5;
         @(posedge clk);
 
 //----------------------ALU REG FUNCTIONS----------------------------//
         //Writes 0 to reg0, 1 to reg1, then increments reg0 to 64
-        user_write_data = 8'h01;
-        write_addr = 4'd0;
-        write_en = 1;
-        @(posedge clk);
-        
-        write_addr = 4'd1;
-        user_write_data = 8'h00;
-        ra_addr = 4'd0;
-        rb_addr = 4'd1;
+        @(negedge clk);
         alu_opcode = `ADD;
+        alu_en = 0;
+        ra_addr = 0;
+        rb_addr = 1;
+        
+        //This should write 0 to reg0
+        write_en = 1;
+        write_addr = 0;
+        user_write_data = 8'h00;
         @(posedge clk);
         
+        //This should write 1 to reg1
+        @(negedge clk);
+        write_addr = 1;
+        user_write_data = 8'h01;
+        @(posedge clk);
+        
+        //enable ALU, writing results to 0.
+        @(negedge clk);
+        write_addr = 0;
         alu_en = 1;
+        alu_opcode = `ADD;
+        //reg0 should end at 64
+        //The very first loop should be 0+1, the second loop 1+1, then 2+1, etc etc
         for (i = 0; i < 64; i = i+1) begin
             @(posedge clk);
         end
+        
+        //Test subtraction, should start at 127-10 --> -123
+        @(negedge clk);
+        alu_en = 0;
+        write_addr = 12;
+        user_write_data = 8'h7F;
+        @(posedge clk);
+        @(negedge clk);
+        write_addr = 6;
+        user_write_data = 8'h0A;
+        @(posedge clk);
+        @(negedge clk);
+        ra_addr = 12;
+        rb_addr = 6;
+        alu_opcode = `SUB;
+        alu_en = 1;
+        write_addr = 12;
+        for (i = 0; i < 25; i=i+1) begin
+            @(posedge clk);
+        end
+        
+        
         
         $fclose(logs);
         $finish;

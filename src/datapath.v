@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-
+//FILE: datapath.v
 module datapath(
     input clk,
     input alu_en,
@@ -33,7 +33,7 @@ module datapath(
         .read_a(ra_data),
         .read_b(rb_data)
     );
+    assign write_data = alu_en ? alu_out : user_write_data;
     assign read_a = (write_en && ra_addr == write_addr) ? write_data : ra_data;
     assign read_b = (write_en && rb_addr == write_addr) ? write_data : rb_data;
-    assign write_data = alu_en ? alu_out : user_write_data;
 endmodule
