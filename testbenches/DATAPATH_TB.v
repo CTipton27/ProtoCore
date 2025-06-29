@@ -12,6 +12,7 @@ module DATAPATH_TB(
     );
     reg [2:0] alu_opcode;
     reg clk;
+    reg rst;
     reg alu_en;
     reg [3:0] ra_addr;
     reg [3:0] rb_addr;
@@ -30,6 +31,7 @@ module DATAPATH_TB(
     
     datapath DUT(
         .clk(clk),
+        .rst(rst),
         .alu_en(alu_en),
         .alu_opcode(alu_opcode),
         .user_write_data(user_write_data),
@@ -76,6 +78,7 @@ module DATAPATH_TB(
               $time, ra_addr, rb_addr, write_addr, user_write_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry);
               
         //Initialize all inputs to 0.
+        @(negedge clk);
         alu_opcode = 0;
         alu_en = 0;
         ra_addr = 0;
@@ -83,6 +86,11 @@ module DATAPATH_TB(
         write_addr = 0;
         user_write_data = 0;
         write_en = 0;
+        rst = 1;
+        @(posedge clk);
+        
+        @(negedge clk);
+        rst = 0;
         @(posedge clk);
         
 //----------------------DEFAULT REG FUNCTIONS----------------------------//
@@ -119,42 +127,50 @@ module DATAPATH_TB(
         rb_addr = 3;
         @(posedge clk);
         
+        //Test write to reg0, should not change
+        @(negedge clk);
+        write_en = 1;
+        write_addr = 0;
+        ra_addr = 0;
+        rb_addr = 0;
+        @(posedge clk);
+        @(posedge clk);
+        
         // Read without write enable (should not change data)
         @(negedge clk);
         write_addr = 5;
         user_write_data = 8'h11;
         write_en = 0;
-        @(posedge clk); // No write should occur
-
         ra_addr = 5;
+        @(posedge clk); // No write should occur
         @(posedge clk);
 
 //----------------------ALU REG FUNCTIONS----------------------------//
-        //Writes 0 to reg0, 1 to reg1, then increments reg0 to 64
+        //Writes 0 to reg1, 1 to reg2, then increments reg1 to 64
         @(negedge clk);
         alu_opcode = `ADD;
         alu_en = 0;
-        ra_addr = 0;
-        rb_addr = 1;
+        ra_addr = 1;
+        rb_addr = 2;
         
-        //This should write 0 to reg0
+        //This should write 0 to reg1
         write_en = 1;
-        write_addr = 0;
+        write_addr = 1;
         user_write_data = 8'h00;
         @(posedge clk);
         
-        //This should write 1 to reg1
+        //This should write 1 to reg2
         @(negedge clk);
-        write_addr = 1;
+        write_addr = 2;
         user_write_data = 8'h01;
         @(posedge clk);
         
-        //enable ALU, writing results to 0.
+        //enable ALU, writing results to reg1.
         @(negedge clk);
-        write_addr = 0;
+        write_addr = 1;
         alu_en = 1;
         alu_opcode = `ADD;
-        //reg0 should end at 64
+        //reg1 should end at 64
         //The very first loop should be 0+1, the second loop 1+1, then 2+1, etc etc
         for (i = 0; i < 64; i = i+1) begin
             @(posedge clk);
@@ -179,9 +195,7 @@ module DATAPATH_TB(
         for (i = 0; i < 25; i=i+1) begin
             @(posedge clk);
         end
-        
-        
-        
+
         $fclose(logs);
         $finish;
     end

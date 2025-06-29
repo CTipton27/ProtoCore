@@ -2,6 +2,7 @@
 //FILE: reg_vile.v
 module reg_file(
     input clk,
+    input rst,
     input [3:0] ra,
     input [3:0] rb,
     input [3:0] wa,
@@ -12,9 +13,11 @@ module reg_file(
     );
 
     reg [7:0] regfile [15:0];
+    assign read_a = (ra == 0) ? 8'b0 : regfile[ra];
+    assign read_b = (rb == 0) ? 8'b0 : regfile[rb];
     
-    assign read_a = regfile[ra];
-    assign read_b = regfile[rb];
-    
-    always @ (posedge clk) if (we) regfile[wa] <= wd; //note to self: REQUIRES we *BEFORE* posedge to write properly.
+    always @ (posedge clk) begin 
+        if (rst) regfile[0] <= 8'b0;
+        else if (we && wa != 0) regfile[wa] <= wd;
+    end
 endmodule

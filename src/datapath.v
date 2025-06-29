@@ -2,6 +2,7 @@
 //FILE: datapath.v
 module datapath(
     input clk,
+    input rst,
     input alu_en,
     input [3:0] alu_opcode,
     input [7:0] user_write_data,
@@ -25,6 +26,7 @@ module datapath(
     
     reg_file regfile (
         .clk(clk),
+        .rst(rst),
         .ra(ra_addr),
         .rb(rb_addr),
         .wa(write_addr),
@@ -34,6 +36,6 @@ module datapath(
         .read_b(rb_data)
     );
     assign write_data = alu_en ? alu_out : user_write_data;
-    assign read_a = (write_en && ra_addr == write_addr) ? write_data : ra_data;
-    assign read_b = (write_en && rb_addr == write_addr) ? write_data : rb_data;
+    assign read_a = (ra_addr == 0) ? 8'b0 : (write_en && ra_addr == write_addr) ? write_data : ra_data;
+    assign read_b = (rb_addr == 0) ? 8'b0 : (write_en && rb_addr == write_addr) ? write_data : rb_data;
 endmodule
