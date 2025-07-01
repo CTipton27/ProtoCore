@@ -29,7 +29,7 @@ module ALU(
             3'd5: out = ~a;                 //not(a)
             3'd6: out = a<<1;     //shl(a)
             3'd7: out = a>>1;     //shr(a)
-            default: out = "00000000";
+            default: out = 8'b0;
         endcase
         zero = (out == 8'b0);
     end

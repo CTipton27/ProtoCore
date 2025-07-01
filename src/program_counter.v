@@ -1,0 +1,21 @@
+`timescale 1ns / 1ps
+//FILE: program_counter.v
+module program_counter(
+    input clk,
+    input rst,
+    input en,
+    input overwrite,
+    input [7:0] o_data,
+    output [7:0] addr
+    );
+    
+    reg [7:0] proc_addr;
+    always @ (posedge clk) begin 
+        if (rst) proc_addr <= 8'b0;//Always start at instruction 0
+        else begin
+            if (overwrite) proc_addr <= o_data; //if overwriting, move to overwritten data.
+            else if (en) proc_addr <= proc_addr + 1;
+        end 
+    end
+    assign addr = proc_addr;
+endmodule
