@@ -2,10 +2,11 @@
 //FILE: full_cpu.v
 
 module full_cpu(
-    input clk,
-    input rst,
-    output [6:0] seg,
-    output [1:0] an
+    input clk, //From xdc
+    input rst, //From xdc, corresponds to center button
+    output [6:0] seg, //7-seg will show PC counter
+    output [1:0] an,
+    output [15:0] led  //LEDs will show BIN data of read_b and read_a respectively
     
     );
     
@@ -57,4 +58,7 @@ module full_cpu(
         .imm_flag(imm_flag),
         .HALT(HALT_flag)
     );
+    
+    assign led[15:8] = read_b;
+    assign led[7:0]  = read_a;
 endmodule
