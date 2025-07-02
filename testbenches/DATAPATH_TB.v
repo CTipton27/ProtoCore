@@ -12,7 +12,6 @@ module DATAPATH_TB(
     );
     reg [2:0] alu_opcode;
     reg clk;
-    reg rst;
     reg alu_en;
     reg [3:0] ra_addr;
     reg [3:0] rb_addr;
@@ -86,11 +85,6 @@ module DATAPATH_TB(
         write_addr = 0;
         user_write_data = 0;
         write_en = 0;
-        rst = 1;
-        @(posedge clk);
-        
-        @(negedge clk);
-        rst = 0;
         @(posedge clk);
         
 //----------------------DEFAULT REG FUNCTIONS----------------------------//

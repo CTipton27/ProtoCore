@@ -2,7 +2,6 @@
 //FILE: reg_vile.v
 module reg_file(
     input clk,
-    input rst,
     input [3:0] ra,
     input [3:0] rb,
     input [3:0] wa,
@@ -17,7 +16,7 @@ module reg_file(
     assign read_b = (rb == 0) ? 8'b0 : regfile[rb];
     
     always @ (posedge clk) begin 
-        if (rst) regfile[0] <= 8'b0;
-        else if (we && wa != 0) regfile[wa] <= wd;
+        if (we && wa != 0) regfile[wa] <= wd;
+        regfile[0] <= 8'b0;
     end
 endmodule
