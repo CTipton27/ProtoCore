@@ -22,13 +22,13 @@ module ALU(
     always @ (*) begin
         case (opcode)
             3'd0: {carry, out} = a + b;     //add
-            3'd1: {carry, out} = a - b;     //sub
+            3'd1: out = a - b;              //sub
             3'd2: out = a & b;              //and
             3'd3: out = a | b;              //or
             3'd4: out = a ^ b;              //xor
             3'd5: out = ~a;                 //not(a)
-            3'd6: out = a<<1;     //shl(a)
-            3'd7: out = a>>1;     //shr(a)
+            3'd6: out = a<<1;               //shl(a)
+            3'd7: out = a>>1;               //shr(a)
             default: out = 8'b0;
         endcase
         zero = (out == 8'b0);

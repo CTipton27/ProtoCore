@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-//FILE: reg_vile.v
+//FILE: reg_file.v
 module reg_file(
     input clk,
     input [3:0] ra,

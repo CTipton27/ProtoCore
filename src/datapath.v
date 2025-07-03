@@ -9,7 +9,8 @@ module datapath(
     input write_en,
     input imm_flag,
     output [7:0] read_a, read_b,
-    output alu_zero, alu_carry
+    output alu_zero, alu_carry,
+    output [7:0] jump_target
     );
     wire [7:0] ra_data, rb_data; //output data of regs.
     wire [7:0] alu_out;
@@ -39,4 +40,5 @@ module datapath(
     assign read_a = (ra_addr == 0) ? 8'b0 : (write_en && ra_addr == write_addr) ? write_data : ra_data;
     assign read_b = (rb_addr == 0) ? 8'b0 : (write_en && rb_addr == write_addr) ? write_data : rb_data;
     assign rb_data_mux = (imm_flag == 1) ? imm_value : rb_data;
+    assign jump_target = alu_out;
 endmodule
