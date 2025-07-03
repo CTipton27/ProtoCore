@@ -7,7 +7,7 @@ module instruction_rom(
     );
     reg [23:0] rom [255:0]; //256x24 rom
     
-    initial $readmemh("program.mem", rom);
+    initial $readmemb("program.mem", rom);
     
     
     assign data = rom[addr];

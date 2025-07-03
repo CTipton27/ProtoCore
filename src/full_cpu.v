@@ -11,7 +11,7 @@ module full_cpu(
     );
     wire [2:0] alu_opcode;
     wire [3:0] ra_addr, rb_addr, rd_addr;
-    wire alu_en, write_en, imm_flag, alu_zero, alu_carry, pc_en, pc_overwrite, HALT_flag, is_jump;
+    wire alu_en, write_en, imm_flag, alu_zero, alu_carry, pc_en, pc_overwrite, HALT_flag;
     wire [7:0] imm_value, read_a, read_b, pc_overwrite_data, pc_addr, jump_target;
     wire [23:0] ROM_data;
     
