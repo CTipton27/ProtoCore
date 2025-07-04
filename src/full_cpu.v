@@ -11,15 +11,15 @@ module full_cpu(
     );
     wire [2:0] alu_opcode;
     wire [3:0] ra_addr, rb_addr, rd_addr;
-    wire alu_en, write_en, imm_flag, alu_zero, alu_carry, pc_en, pc_overwrite, HALT_flag;
-    wire [7:0] imm_value, read_a, read_b, pc_overwrite_data, pc_addr, jump_target;
+    wire write_alu, write_en, imm_flag, alu_zero, alu_carry, pc_en, pc_overwrite, HALT_flag, ram_write_en, is_load;
+    wire [7:0] imm_value, read_a, read_b, pc_overwrite_data, pc_addr, alu_out, ram_addr, ram_read_data, ram_write_data, top_data;
     wire [23:0] ROM_data;
     
     datapath datapath (
         .clk(clk),
-        .alu_en(alu_en),
+        .write_alu(write_alu),
         .alu_opcode(alu_opcode),
-        .imm_value(imm_value),
+        .top_data(top_data),
         .write_addr(rd_addr), 
         .ra_addr(ra_addr), 
         .rb_addr(rb_addr),
@@ -29,7 +29,7 @@ module full_cpu(
         .read_b(read_b),
         .alu_zero(alu_zero), 
         .alu_carry(alu_carry),
-        .jump_target(jump_target)
+        .alu_out(alu_out)
     );
     
     program_counter PC (
@@ -50,7 +50,7 @@ module full_cpu(
         .instruction(ROM_data),
         .rst(rst),
         .alu_zero(alu_zero),
-        .alu_en(alu_en),
+        .write_alu(write_alu),
         .alu_opcode(alu_opcode),
         .imm_value(imm_value),
         .write_addr(rd_addr), 
@@ -59,7 +59,9 @@ module full_cpu(
         .write_en(write_en),
         .imm_flag(imm_flag),
         .HALT(HALT_flag),
-        .pc_overwrite(pc_overwrite)
+        .pc_overwrite(pc_overwrite),
+        .is_load(is_load),
+        .ram_write_en(ram_write_en)
     );
     
     sev_seg sev_seg (
@@ -69,9 +71,18 @@ module full_cpu(
         .an(an)
     );
     
+    ram ram(
+        .clk(clk),
+        .addr(ram_addr),
+        .write_data(ram_write_data),
+        .write_en(ram_write_en),
+        .read_data(ram_read_data)
+    );
+    assign top_data = is_load ? ram_read_data : imm_value;
+    assign ram_write_data = read_b;
     assign pc_en = !HALT_flag;
-    assign pc_overwrite_data = jump_target;
-    
+    assign pc_overwrite_data = alu_out;
     assign led[15:8] = read_b;
     assign led[7:0]  = read_a;
+    assign ram_addr = alu_out;
 endmodule

@@ -16,7 +16,7 @@ module DATAPATH_TB(
     reg [3:0] ra_addr;
     reg [3:0] rb_addr;
     reg [3:0] write_addr;
-    reg [7:0] user_write_data;
+    reg [7:0] imm_value;
     reg write_en;
     wire [7:0] read_a;
     wire [7:0] read_b;
@@ -33,7 +33,7 @@ module DATAPATH_TB(
         .rst(rst),
         .alu_en(alu_en),
         .alu_opcode(alu_opcode),
-        .user_write_data(user_write_data),
+        .imm_value(imm_value),
         .write_addr(write_addr), 
         .ra_addr(ra_addr), 
         .rb_addr(rb_addr),
@@ -74,7 +74,7 @@ module DATAPATH_TB(
 		end
 	$fdisplay(logs, "DATAPATH Testbench Log");
     $fmonitor(logs, "Time: %0t | ra: %d | rb: %d | wa: %d | uwd: %h | we: %b | read_a: %h | read_b: %h | opcode: %d | zero: %b | carry: %b |",
-              $time, ra_addr, rb_addr, write_addr, user_write_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry);
+              $time, ra_addr, rb_addr, write_addr, imm_value, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry);
               
         //Initialize all inputs to 0.
         @(negedge clk);
@@ -83,7 +83,7 @@ module DATAPATH_TB(
         ra_addr = 0;
         rb_addr = 0;
         write_addr = 0;
-        user_write_data = 0;
+        imm_value = 0;
         write_en = 0;
         @(posedge clk);
         
@@ -93,7 +93,7 @@ module DATAPATH_TB(
             @(negedge clk);
             write_en = 1;
             write_addr = i;
-            user_write_data = i * 8'h11; // 0x00, 0x11, ..., 0xFF
+            imm_value = i * 8'h11; // 0x00, 0x11, ..., 0xFF
             @(posedge clk);
         end
         
@@ -111,7 +111,7 @@ module DATAPATH_TB(
         @(negedge clk);
         write_en = 1;
         write_addr = 3;
-        user_write_data = 8'hAA;
+        imm_value = 8'hAA;
         @(posedge clk);
         
         @(negedge clk);
@@ -133,7 +133,7 @@ module DATAPATH_TB(
         // Read without write enable (should not change data)
         @(negedge clk);
         write_addr = 5;
-        user_write_data = 8'h11;
+        imm_value = 8'h11;
         write_en = 0;
         ra_addr = 5;
         @(posedge clk); // No write should occur
@@ -150,13 +150,13 @@ module DATAPATH_TB(
         //This should write 0 to reg1
         write_en = 1;
         write_addr = 1;
-        user_write_data = 8'h00;
+        imm_value = 8'h00;
         @(posedge clk);
         
         //This should write 1 to reg2
         @(negedge clk);
         write_addr = 2;
-        user_write_data = 8'h01;
+        imm_value = 8'h01;
         @(posedge clk);
         
         //enable ALU, writing results to reg1.
@@ -174,11 +174,11 @@ module DATAPATH_TB(
         @(negedge clk);
         alu_en = 0;
         write_addr = 12;
-        user_write_data = 8'h7F;
+        imm_value = 8'h7F;
         @(posedge clk);
         @(negedge clk);
         write_addr = 6;
-        user_write_data = 8'h0A;
+        imm_value = 8'h0A;
         @(posedge clk);
         @(negedge clk);
         ra_addr = 12;
