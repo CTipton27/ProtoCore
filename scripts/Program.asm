@@ -26,10 +26,10 @@ ADDI R13, R0, 3       ; (1000) R13 = base addr = 3
 STORE R13, R3, 1      ; (1011) MEM[3+1] = R3
 LOAD R14, R13, 1      ; (1010) R14 = MEM[3+1] → should be 50
 
-; --- Failure path ---
-ADDI R1, R0, 0        ; (1000) FAIL: R1 = 0
-HALT                  ; (1111) stop execution
-
 ; --- Success path ---
 ADDI R1, R0, 1        ; (1000) SUCCESS: R1 = 1
+HALT                  ; (1111) stop execution
+
+; --- Fail path ---
+ADDI R1, R0, 1        ; (1000) FAIL: R1 = 0
 HALT                  ; (1111) stop execution
