@@ -11,8 +11,8 @@ module full_cpu(
     );
     wire [2:0] alu_opcode;
     wire [3:0] ra_addr, rb_addr, rd_addr;
-    wire write_alu, write_en, imm_flag, alu_zero, alu_carry, pc_en, pc_overwrite, HALT_flag, ram_write_en, is_load;
-    wire [7:0] imm_value, read_a, read_b, pc_overwrite_data, pc_addr, alu_out, ram_addr, ram_read_data, ram_write_data, top_data;
+    wire write_alu, write_en, imm_flag, alu_zero, alu_carry, pc_en, pc_overwrite, HALT_flag, ram_write_en, is_load, is_jump;
+    wire [7:0] imm_value, read_a, read_b, pc_overwrite_data, pc_addr, alu_out, ram_addr, ram_read_data, ram_write_data, top_data, pc_datapath_mux;
     wire [23:0] ROM_data;
     
     datapath datapath (
@@ -61,7 +61,8 @@ module full_cpu(
         .HALT(HALT_flag),
         .pc_overwrite(pc_overwrite),
         .is_load(is_load),
-        .ram_write_en(ram_write_en)
+        .ram_write_en(ram_write_en),
+        .is_jump(is_jump)
     );
     
     sev_seg sev_seg (
@@ -78,11 +79,21 @@ module full_cpu(
         .write_en(ram_write_en),
         .read_data(ram_read_data)
     );
+    
+    pc_datapath pc_datapath(
+        .pc_overwrite(pc_overwrite),
+        .imm_value(imm_value),
+        .pc_mux(pc_datapath_mux),
+        .is_jump(is_jump),
+        .overwrite_data(pc_overwrite_data)
+    );
+    
+    assign pc_datapath_mux = (is_jump) ? read_a : pc_addr;
     assign top_data = is_load ? ram_read_data : imm_value;
     assign ram_write_data = read_b;
     assign pc_en = !HALT_flag;
-    assign pc_overwrite_data = alu_out;
+    assign ram_addr = alu_out;
+    
     assign led[15:8] = read_b;
     assign led[7:0]  = read_a;
-    assign ram_addr = alu_out;
 endmodule

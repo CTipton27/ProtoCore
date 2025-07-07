@@ -14,14 +14,14 @@ module instruction_decode(
     output reg imm_flag,
     output reg HALT,
     output reg pc_overwrite,
-    output reg is_load
+    output reg is_load,
+    output is_jump
     );
     wire [3:0] opcode = instruction [23:20];
     wire [3:0] ra = instruction [19:16];
     wire [3:0] rb = instruction [15:12];
     wire [3:0] rd = instruction [11:8];
     wire [7:0] data = instruction [7:0];
-    wire is_jump;
    
     assign is_jump = (opcode == 4'hE);
     always @ (*) begin
@@ -78,12 +78,15 @@ module instruction_decode(
                 rb_addr = rb;
                 imm_value = data;
                 end //STORE
-            4'hC, 4'hD: begin end //branching logic, undefined as of now
+            4'hC, 4'hD: begin 
+                ra_addr = ra;
+                rb_addr = rb;
+                alu_opcode = 3'b1; //subtraction, zero flag determines equality
+                imm_value = data;
+                end
             4'hE: begin 
-                imm_flag = 1;
                 ra_addr = ra;
                 imm_value = data;
-                alu_opcode = 3'b0;
                 end 
             4'hF:begin
                 HALT = 1;
