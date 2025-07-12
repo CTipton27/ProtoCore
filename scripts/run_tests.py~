@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 import subprocess
 import datetime
-# from openpyxl import Workbook
+from openpyxl import Workbook
 
 run_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 log_name = input("Please enter a name for the log directory: ")
@@ -122,9 +122,9 @@ for item in script_dir.iterdir():
                 shutil.rmtree(item)
             except Exception as e:
                 print(f"Warning: Failed to delete directory {item}: {e}")
-# print("Cleanup complete.")
-#
-# # create Excel file and format data.
-# workbook = Workbook()
-#
-# workbook.save(excel_file)
+print("Cleanup complete.")
+
+# create Excel file and format data.
+workbook = Workbook()
+
+workbook.save(excel_file)
