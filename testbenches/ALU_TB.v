@@ -15,8 +15,10 @@ module ALU_TB();
     wire carry;
     wire zero;
     wire [7:0] out;
+    reg fail;
 
     integer logs;
+    integer excel_logs;
     reg [7:0] expected_out;
     reg [24:0] op_name;
     integer i = 0;
@@ -62,16 +64,33 @@ module ALU_TB();
         endcase
     end
 
-    initial begin
-        logs = $fopen("ALUlog.txt", "w");
-        if (!logs) begin
-            $display("Failed to open log file!");
-            $finish;
-        end
+    `ifndef LOG_PATH
+		`define LOG_PATH "ALUlog.txt"  // fallback path if not passed in
+	`endif
+	`ifndef EXCEL_LOG_PATH
+	   `define EXCEL_LOG_PATH "EALUlog.txt"
+	`endif
+
+	initial begin
+		logs = $fopen(`LOG_PATH, "w");
+		if (!logs) begin
+			$display("Failed to open log file at %s", `LOG_PATH);
+			$finish;
+		end
+		
+		excel_logs = $fopen(`EXCEL_LOG_PATH, "w");
+		if (!excel_logs) begin
+		    $display("Failed to open log file at %s", `EXCEL_LOG_PATH);
+			$finish;
+	    end
 
         $fdisplay(logs, "ALU Testbench Log");
-
+        
+        $fmonitor(excel_logs, "%0t | %d | %d | %b | %b | %b | %d | %b", 
+              $time, a, b, opcode, carry, zero, out, fail);
+              
         // Test ADD
+        //runs test such that 1+1, 1+2, 1+4, 1+8, ... 1+128, 2+0, 2+1, ... 128+128
         opcode = `ADD;
         for (i = 0; i < 8; i = i + 1) begin
             for (j = 0; j < 8; j = j + 1) begin
@@ -81,8 +100,9 @@ module ALU_TB();
                 check_result();
             end
         end
-
+        
         // Test SUB (including edge cases)
+        //runs test such that 1-0, 1-1, 1-2, 1-4, 1-8, ... 1-128, 2-0, 2-1, ..., 128-128 
         opcode = `SUB;
         for (i = 0; i < 8; i = i + 1) begin
             for (j = 0; j < 8; j = j + 1) begin
@@ -159,12 +179,13 @@ module ALU_TB();
     task check_result;
         begin
             if (out !== expected_out) begin
+                fail = 1;
                 $display("ERROR at time %0t: %s failed. a=%h, b=%h, expected=%h, got=%h",
                          $time, op_name, a, b, expected_out, out);
                 $fdisplay(logs, "ERROR at time %0t: %s failed. a=%h, b=%h, expected=%h, got=%h",
                           $time, op_name, a, b, expected_out, out);
-                $stop;
             end else begin
+                fail = 0;
                 $fdisplay(logs, "PASS at time %0t: %s correct. a=%h, b=%h, out=%h",
                          $time, op_name, a, b, out);
             end
