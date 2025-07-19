@@ -60,6 +60,7 @@ module REG_TB();
         ra=0;
         rb=0;
         we = 0;
+        fail = 0;
         @(posedge clk);
         
         // Write unique values to every register
@@ -106,10 +107,12 @@ module REG_TB();
         
         if (read_a !== expected[ra]) begin
             $fdisplay(logs, "FAIL: Overwrite test failed, read_a = %h, expected %h", read_a, expected[ra]);
+            fail = 1;
         end else begin
             $fdisplay(logs, "PASS: Overwrite test Succeeded, read_a = %h, expected %h", read_a, expected[ra]);
         end
           // Read without write enable (should not change data)
+        fail = 0;
         wa = 4'd5;
         wd = 8'h11;
         we = 0;
@@ -122,6 +125,7 @@ module REG_TB();
             $fdisplay(logs, "FAIL: Write enable off test failed, read_a = %h, expected %h", read_a, expected[ra]);
         end else begin
             $fdisplay(logs, "PASS: Write enable off test Succeeded, read_a = %h, expected %h", read_a, expected[ra]);
+            fail = 1;
         end
 
         $fclose(logs);
