@@ -9,17 +9,17 @@
 `define SHR 3'b111
 
 module DATAPATH_TB();
-    wire clk;
-    wire write_alu;
-    wire [2:0] alu_opcode;
-    wire [7:0] ram_data, imm_data;
-    wire [3:0] write_addr, ra_addr, rb_addr;
-    wire write_en;
-    wire is_load;
-    wire imm_flag;
-    reg [7:0] read_a, read_b;
-    reg alu_zero, alu_carry;
-    reg [7:0] alu_out;
+    reg clk;
+    reg write_alu;
+    reg [2:0] alu_opcode;
+    reg [7:0] ram_data, imm_data;
+    reg [3:0] write_addr, ra_addr, rb_addr;
+    reg write_en;
+    reg is_load;
+    reg imm_flag;
+    wire [7:0] read_a, read_b;
+    wire alu_zero, alu_carry;
+    wire [7:0] alu_out;
 
     reg fail;
     integer logs;
@@ -91,5 +91,5 @@ module DATAPATH_TB();
 	$fdisplay(logs, "DATAPATH Testbench Log");
     $fmonitor(excel_logs, "%0t | %d | %d | %d | %h | %h | %b | %h | %h | %h | %b | %b | %b | %b",
               $time, ra_addr, rb_addr, write_addr, imm_data, ram_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, imm_flag, fail);
-              
+    end
 endmodule
