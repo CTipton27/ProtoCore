@@ -1,9 +1,0 @@
-0.7
-2020.2
-Nov  8 2024
-22:36:57
-C:/Users/thega/Projects/riscVcoreAutomation/src/ALU.v,1751554033,verilog,,C:/Users/thega/Projects/riscVcoreAutomation/src/reg_file.v,,ALU,,,,,,,,
-C:/Users/thega/Projects/riscVcoreAutomation/src/datapath.v,1751895040,verilog,,C:/Users/thega/Projects/riscVcoreAutomation/src/ALU.v,,datapath,,,,,,,,
-C:/Users/thega/Projects/riscVcoreAutomation/src/reg_file.v,1751554033,verilog,,,,reg_file,,,,,,,,
-C:/Users/thega/Projects/riscVcoreAutomation/testbenches/DATAPATH_TB.v,1751895040,verilog,,C:/Users/thega/Projects/riscVcoreAutomation/src/datapath.v,,DATAPATH_TB,,,,,,,,
-C:/Users/thega/Projects/riscVcoreAutomation/testbenches/REG_TB.v,1751215471,verilog,,C:/Users/thega/Projects/riscVcoreAutomation/src/reg_file.v,,REG_TB,,,,,,,,

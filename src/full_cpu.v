@@ -94,6 +94,5 @@ module full_cpu(
     assign pc_en = !HALT_flag;
     assign ram_addr = alu_out;
     
-    assign led[15:8] = read_b;
-    assign led[7:0]  = read_a;
+    assign led = HALT_flag ? {8'b0, imm_value} : {read_b, read_a};
 endmodule

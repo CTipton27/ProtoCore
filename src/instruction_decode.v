@@ -92,6 +92,7 @@ module instruction_decode(
                 HALT = 1;
                 write_en = 0;
                 ram_write_en = 0;
+				imm_value = data;
                 end
             default: begin end
         endcase
