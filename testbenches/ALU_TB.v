@@ -15,7 +15,7 @@ module ALU_TB();
     wire carry;
     wire zero;
     wire [7:0] out;
-    reg fail;
+    integer status = 2;
 
     integer logs;
     integer excel_logs;
@@ -23,7 +23,6 @@ module ALU_TB();
     reg [24:0] op_name;
     integer i = 0;
     integer j = 0;
-    integer k = 0;
 
     ALU DUT(
         .a(a),
@@ -34,7 +33,7 @@ module ALU_TB();
         .zero(zero)
     );
 
-    // Assign operation name for readable logs
+    // Operation name assignment
     always @(*) begin
         case (opcode)
             `ADD: op_name = "ADD";
@@ -49,7 +48,7 @@ module ALU_TB();
         endcase
     end
 
-    // Compute expected output combinationally based on opcode
+    // Expected output
     always @(*) begin
         case (opcode)
             `ADD: expected_out = a + b;
@@ -65,32 +64,29 @@ module ALU_TB();
     end
 
     `ifndef LOG_PATH
-		`define LOG_PATH "ALUlog.txt"  // fallback path if not passed in
-	`endif
-	`ifndef EXCEL_LOG_PATH
-	   `define EXCEL_LOG_PATH "EALUlog.txt"
-	`endif
+        `define LOG_PATH "ALUlog.txt"
+    `endif
+    `ifndef EXCEL_LOG_PATH
+        `define EXCEL_LOG_PATH "EALUlog.txt"
+    `endif
 
-	initial begin
-		logs = $fopen(`LOG_PATH, "w");
-		if (!logs) begin
-			$display("Failed to open log file at %s", `LOG_PATH);
-			$finish;
-		end
-		
-		excel_logs = $fopen(`EXCEL_LOG_PATH, "w");
-		if (!excel_logs) begin
-		    $display("Failed to open log file at %s", `EXCEL_LOG_PATH);
-			$finish;
-	    end
+    initial begin
+        logs = $fopen(`LOG_PATH, "w");
+        if (!logs) begin
+            $display("Failed to open log file at %s", `LOG_PATH);
+            $finish;
+        end
+
+        excel_logs = $fopen(`EXCEL_LOG_PATH, "w");
+        if (!excel_logs) begin
+            $display("Failed to open log file at %s", `EXCEL_LOG_PATH);
+            $finish;
+        end
 
         $fdisplay(logs, "ALU Testbench Log");
-        
-        $fmonitor(excel_logs, "%0t | %d | %d | %b | %b | %b | %d | %b", 
-              $time, a, b, opcode, carry, zero, out, fail);
-              
-        // Test ADD
-        //runs test such that 1+1, 1+2, 1+4, 1+8, ... 1+128, 2+0, 2+1, ... 128+128
+        $fdisplay(excel_logs, "Time | A | B | OPCODE | CARRY | ZERO | OUT | STATUS");
+
+        // ADD
         opcode = `ADD;
         for (i = 0; i < 8; i = i + 1) begin
             for (j = 0; j < 8; j = j + 1) begin
@@ -100,9 +96,8 @@ module ALU_TB();
                 check_result();
             end
         end
-        
-        // Test SUB (including edge cases)
-        //runs test such that 1-0, 1-1, 1-2, 1-4, 1-8, ... 1-128, 2-0, 2-1, ..., 128-128 
+
+        // SUB
         opcode = `SUB;
         for (i = 0; i < 8; i = i + 1) begin
             for (j = 0; j < 8; j = j + 1) begin
@@ -113,65 +108,65 @@ module ALU_TB();
             end
         end
 
-        // Test AND
+        // AND
         opcode = `AND;
         for (i = 0; i < 256; i = i + 17) begin
             a = i[7:0];
             for (j = 0; j < 256; j = j + 51) begin
                 b = j[7:0];
-                #10;  // Let the outputs settle
+                #10;
                 check_result();
             end
         end
 
-
-        // Test OR
+        // OR
         opcode = `OR;
         for (i = 0; i < 256; i = i + 17) begin
             a = i[7:0];
             for (j = 0; j < 256; j = j + 51) begin
                 b = j[7:0];
-                #10;  // Let the outputs settle
+                #10;
                 check_result();
             end
         end
 
-        // Test XOR
+        // XOR
         opcode = `XOR;
         for (i = 0; i < 256; i = i + 17) begin
             a = i[7:0];
             for (j = 0; j < 256; j = j + 51) begin
                 b = j[7:0];
-                #10;  // Let the outputs settle
+                #10;
                 check_result();
             end
         end
 
-        // Test NOT (only 'a' matters)
+        // NOT
         opcode = `NOT;
         for (i = 0; i < 256; i = i + 17) begin
             a = i[7:0];
-            #10;  // Let the outputs settle
+            #10;
             check_result();
         end
 
-        // Test SHL (check shifting bits left)
+        // SHL
         opcode = `SHL;
         for (i = 0; i < 256; i = i + 17) begin
             a = i[7:0];
-            #10;  // Let the outputs settle
+            #10;
             check_result();
         end
 
-        // Test SHR (check shifting bits right)
+        // SHR
         opcode = `SHR;
         for (i = 0; i < 256; i = i + 17) begin
             a = i[7:0];
-            #10;  // Let the outputs settle
+            #10;
             check_result();
         end
 
         $fclose(logs);
+        $fclose(excel_logs);
         $display("All tests completed.");
         $finish;
     end
@@ -179,16 +174,18 @@ module ALU_TB();
     task check_result;
         begin
             if (out !== expected_out) begin
-                fail = 1;
-                $display("ERROR at time %0t: %s failed. a=%h, b=%h, expected=%h, got=%h",
-                         $time, op_name, a, b, expected_out, out);
-                $fdisplay(logs, "ERROR at time %0t: %s failed. a=%h, b=%h, expected=%h, got=%h",
-                          $time, op_name, a, b, expected_out, out);
+                status = 1;
+                $fdisplay(logs, "FAIL @ %0t: %s  a=%h b=%h  expected=%h  got=%h", 
+                    $time, op_name, a, b, expected_out, out);
             end else begin
-                fail = 0;
-                $fdisplay(logs, "PASS at time %0t: %s correct. a=%h, b=%h, out=%h",
-                         $time, op_name, a, b, out);
+                status = 0;
+                $fdisplay(logs, "PASS @ %0t: %s  a=%h b=%h  out=%h", 
+                    $time, op_name, a, b, out);
             end
+
+            // Log to excel-compatible file
+            $fdisplay(excel_logs, "%0t | %d | %d | %b | %b | %b | %d | %1d", 
+                $time, a, b, opcode, carry, zero, out, status);
         end
     endtask
 
