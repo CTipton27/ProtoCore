@@ -160,6 +160,8 @@ module DATAPATH_TB();
         top_data = 8'hA4;
         write_addr = 9;
         ra_addr = 9;
+    
+        #0;    
         if (read_a != top_data) begin 
             $fdisplay(logs, "FAIL: FORWARDING test failed, read_a = %h, expected %h", read_a, top_data);
             status = 1;
@@ -177,6 +179,8 @@ module DATAPATH_TB();
         write_addr = 0;
         ra_addr = 0;
         rb_addr = 9;
+        
+        #0;
         if (read_b != expected_reg[rb_addr]) begin 
             $fdisplay(logs, "FAIL: OVERWRITE test failed, read_b = %h, expected %h", read_b, expected_reg[rb_addr]);
             status = 1;
@@ -211,6 +215,8 @@ module DATAPATH_TB();
         top_data = 0;
         write_addr = 0;
         rb_addr = 0;
+        #0;
+        
         if (read_b != expected_reg[rb_addr]) begin 
             $fdisplay(logs, "FAIL: R0 OVERWRITE test failed, read_b = %h, expected %h", read_b, expected_reg[rb_addr]);
             status = 1;
@@ -236,6 +242,7 @@ module DATAPATH_TB();
         expected_reg[write_addr] = top_data;
         ra_addr = 13;
         rb_addr = 13;
+        #0;
         if (read_a != expected_reg[ra_addr]) begin 
             $fdisplay(logs, "FAIL: MEMORY test failed, read_a = %h, expected %h", read_a, expected_reg[ra_addr]);
             status = 1;

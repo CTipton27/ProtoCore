@@ -15,11 +15,11 @@ PASS: Readback test passed, read_a = cc, read_b = 33
 PASS: Readback test passed, read_a = dd, read_b = 22
 PASS: Readback test passed, read_a = ee, read_b = 11
 PASS: Readback test passed, read_a = ff, read_b = 00
-FAIL: FORWARDING test failed, read_a = ff, expected a4
-FAIL: OVERWRITE test failed, read_b = 00, expected a4
+PASS: FORWARDING test passed, read_a = a4, expected a4
+PASS: OVERWRITE test passed, read_b = a4, expected a4
 PASS: R0 FORWARDING test passed, read_a = 00, expected 00
-FAIL: R0 OVERWRITE test failed, read_b = a4, expected 00
-FAIL: MEMORY test failed, read_a = 00, expected 6c
+PASS: R0 OVERWRITE test passed, read_b = 00, expected 00
+PASS: MEMORY test passed, read_a = 6c, read_b = 6c
 PASS: ADD test passed, read_a = 01, read_b = 01
 PASS: ADD test passed, read_a = 02, read_b = 01
 PASS: ADD test passed, read_a = 03, read_b = 01
