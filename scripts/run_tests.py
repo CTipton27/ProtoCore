@@ -33,7 +33,7 @@ testbenches = {
         "xsim_opts": ["alu_tb_snapshot"],
         "log_file": "ALUlog.txt",
         "excel_log_file": "EALUlog.txt",
-        "excel_format" : ["time", "a", "b", "opcode", "carry", "zero", "out", "fail"]
+        "excel_format" : ["time", "a", "b", "opcode", "carry", "zero", "out", "status"]
     },
     "reg_file": {
         "tb": tb_dir / "REG_TB.v",
@@ -42,7 +42,7 @@ testbenches = {
         "xsim_opts": ["reg_tb_snapshot"],
         "log_file": "REGlog.txt",
         "excel_log_file": "EREGlog.txt",
-        "excel_format" : ["time", "ra", "rb", "wa", "wd", "we", "read_a", "read_b", "fail"]
+        "excel_format" : ["time", "ra", "rb", "wa", "wd", "we", "read_a", "read_b", "status"]
     },
     "datapath": {
         "tb": tb_dir / "DATAPATH_TB.v",
@@ -134,7 +134,6 @@ print("Cleanup complete.")
 # Begins the formatting of the Excel plaintext into a .xlsx file
 workbook = Workbook()
 sheet = workbook.active
-sheet.append(testbenches[choice]["excel_format"])
 
 def try_convert(value):
     # Try int first

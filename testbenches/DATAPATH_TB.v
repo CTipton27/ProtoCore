@@ -90,6 +90,7 @@ module DATAPATH_TB();
 	    end
 	    
         $fdisplay(logs, "DATAPATH Testbench Log");
+        $fdisplay(excel_logs, "Time | RA_ADDR | RB_ADDR | WRITE_ADDR | TOP_DATA | WRITE_EN | READ_A | READ_B | ALU_OPCODE | ALU_ZERO | ALU_CARRY | ALU_IMM_FLAG | STATUS");
         $fmonitor(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
                   $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
                   

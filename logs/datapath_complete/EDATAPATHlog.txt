@@ -1,3 +1,4 @@
+Time | RA_ADDR | RB_ADDR | WRITE_ADDR | TOP_DATA | WRITE_EN | READ_A | READ_B | ALU_OPCODE | ALU_ZERO | ALU_CARRY | ALU_IMM_FLAG | STATUS
 0 |  x |  x |  x |   x | x |   x |   x | x | x | x | x | 2
 10000 |  0 |  0 |  0 |   0 | 0 |   0 |   0 | 0 | 1 | 0 | 0 | 2
 20000 |  0 |  0 |  1 |  17 | 1 |   0 |   0 | 0 | 1 | 0 | 0 | 2

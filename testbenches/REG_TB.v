@@ -10,7 +10,7 @@ module REG_TB();
     wire [7:0] read_a;
     wire [7:0] read_b;
     reg [7:0] expected[15:0];
-    reg fail;
+    integer status = 2;
 
     integer logs;
     integer excel_logs;
@@ -52,15 +52,14 @@ module REG_TB();
 	    end
 	    
     $fdisplay(logs, "REG Testbench Log");
-    $fmonitor(excel_logs, "%0t | %d | %d | %d | %h | %b | %h | %h | %b", 
-              $time, ra, rb, wa, wd, we, read_a, read_b, fail);
+    $fdisplay(excel_logs, "Time | RA | RB | WA | WD | WE | READ_A | READ_B | STATUS");
         
         wa=0;
         wd=0;
         ra=0;
         rb=0;
         we = 0;
-        fail = 0;
+        status = 2;
         @(posedge clk);
         
         // Write unique values to every register
@@ -70,35 +69,51 @@ module REG_TB();
             wd = i * 8'h11; // 0x00, 0x11, ..., 0xFF
             expected[wa] = wd;
             @(posedge clk);
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %1d", 
+              $time, ra, rb, wa, wd, we, read_a, read_b, status);
         end
         
         we = 0;
         @(posedge clk);
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %1d", 
+              $time, ra, rb, wa, wd, we, read_a, read_b, status);
+              
         for (i = 0; i < 16; i = i + 1) begin
-            fail = 0;
+            status = 2;
             ra = i[3:0];
             rb = (15 - i) & 4'hF;
             @(posedge clk);
             if (read_a !== expected[ra]) begin
                 $fdisplay(logs, "FAIL at %0t: read_a[%0d] = %h, expected %h", $time, ra, read_a, expected[ra]);
-                fail = 1;
+                status = 1;
+                $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %1d", 
+              $time, ra, rb, wa, wd, we, read_a, read_b, status);
             end
             if (read_b !== expected[rb]) begin
                 $fdisplay(logs, "FAIL at %0t: read_b[%0d] = %h, expected %h", $time, rb, read_b, expected[rb]);
-                fail = 1;
+                status = 1;
+                $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %1d", 
+              $time, ra, rb, wa, wd, we, read_a, read_b, status);
             end
-            if (fail == 0) begin
+            if ((read_a == expected[ra]) & (read_b == expected[rb])) begin
+                status = 0;
                 $fdisplay(logs, "PASS at %0t: read_a[%0d] = %h, read_b[%0d] = %h", $time, ra, read_a, rb, read_b);
+                $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %1d", 
+              $time, ra, rb, wa, wd, we, read_a, read_b, status);
             end
-            fail = 0;
+            status = 2;
         end
         
         // Overwrite test
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %1d", 
+              $time, ra, rb, wa, wd, we, read_a, read_b, status);
         we = 1;
         wa = 4'd3;
         wd = 8'hAA;
         expected[wa] = wd;
         @(posedge clk);
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %1d", 
+              $time, ra, rb, wa, wd, we, read_a, read_b, status);
         we = 0;
 
         ra = 4'd3;
@@ -107,25 +122,37 @@ module REG_TB();
         
         if (read_a !== expected[ra]) begin
             $fdisplay(logs, "FAIL: Overwrite test failed, read_a = %h, expected %h", read_a, expected[ra]);
-            fail = 1;
+            status = 1;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %1d", 
+              $time, ra, rb, wa, wd, we, read_a, read_b, status);
         end else begin
             $fdisplay(logs, "PASS: Overwrite test Succeeded, read_a = %h, expected %h", read_a, expected[ra]);
+            status = 0;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %1d", 
+              $time, ra, rb, wa, wd, we, read_a, read_b, status);
         end
           // Read without write enable (should not change data)
-        fail = 0;
+        status = 2;
         wa = 4'd5;
         wd = 8'h11;
         we = 0;
         @(posedge clk); // No write should occur
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %1d", 
+              $time, ra, rb, wa, wd, we, read_a, read_b, status);
 
         ra = 4'd5;
         @(posedge clk);
         
         if (read_a !== expected[ra]) begin
             $fdisplay(logs, "FAIL: Write enable off test failed, read_a = %h, expected %h", read_a, expected[ra]);
+            status = 1;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %1d", 
+              $time, ra, rb, wa, wd, we, read_a, read_b, status);
         end else begin
             $fdisplay(logs, "PASS: Write enable off test Succeeded, read_a = %h, expected %h", read_a, expected[ra]);
-            fail = 1;
+            status = 0;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %1d", 
+              $time, ra, rb, wa, wd, we, read_a, read_b, status);
         end
 
         $fclose(logs);
