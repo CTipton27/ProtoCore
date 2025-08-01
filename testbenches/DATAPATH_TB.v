@@ -91,9 +91,8 @@ module DATAPATH_TB();
 	    
         $fdisplay(logs, "DATAPATH Testbench Log");
         $fdisplay(excel_logs, "Time | RA_ADDR | RB_ADDR | WRITE_ADDR | TOP_DATA | WRITE_EN | READ_A | READ_B | ALU_OPCODE | ALU_ZERO | ALU_CARRY | ALU_IMM_FLAG | STATUS");
-        $fmonitor(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
                   $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
-                  
         @(negedge clk); //Initialize all inputs to zero
         write_alu = 0;
         alu_opcode = 0; 
@@ -107,6 +106,8 @@ module DATAPATH_TB();
         status = 2;
         expected_reg[0] = 0;
         @(posedge clk);
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         
 /////////////////////////////////////////////////////////////////////
 //BEGIN TESTING
@@ -120,6 +121,8 @@ module DATAPATH_TB();
             top_data = i * 8'h11;
             @(posedge clk);
             expected_reg[i] = top_data;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         end
         
 /////////////////////////////////////////////////////////////////////
@@ -132,22 +135,32 @@ module DATAPATH_TB();
         top_data = 0;
         write_addr = 0;
         @(posedge clk);
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         
         for (i = 0; i < 16; i = i+1) begin
             #2 
             status = 2;
             ra_addr = i;
             rb_addr = 15-i;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
             #2
             if (read_a != expected_reg[ra_addr]) begin 
                 $fdisplay(logs, "FAIL: Readback test failed, read_a = %h, expected %h", read_a, expected_reg[ra_addr]);
                 status = 1;
+                $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
             end else if (read_b != expected_reg[rb_addr]) begin 
                 $fdisplay(logs, "FAIL: Readback test failed, read_b = %h, expected %h", read_b, expected_reg[rb_addr]);
                 status = 1;
+                $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
             end else begin
                 $fdisplay(logs, "PASS: Readback test passed, read_a = %h, read_b = %h", read_a, read_b);
                 status = 0;
+                $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
             end
         end
 
@@ -163,16 +176,24 @@ module DATAPATH_TB();
         ra_addr = 9;
     
         #0;    
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         if (read_a != top_data) begin 
             $fdisplay(logs, "FAIL: FORWARDING test failed, read_a = %h, expected %h", read_a, top_data);
             status = 1;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         end else begin
             $fdisplay(logs, "PASS: FORWARDING test passed, read_a = %h, expected %h", read_a, top_data);
             status = 0;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         end
         @(posedge clk);
         expected_reg[write_addr] = top_data;
         status = 2;
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         @(negedge clk);
         status = 2;
         write_en = 0;
@@ -182,12 +203,18 @@ module DATAPATH_TB();
         rb_addr = 9;
         
         #0;
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         if (read_b != expected_reg[rb_addr]) begin 
             $fdisplay(logs, "FAIL: OVERWRITE test failed, read_b = %h, expected %h", read_b, expected_reg[rb_addr]);
             status = 1;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         end else begin
             $fdisplay(logs, "PASS: OVERWRITE test passed, read_b = %h, expected %h", read_b, expected_reg[rb_addr]);
             status = 0;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         end
 
 /////////////////////////////////////////////////////////////////////
@@ -204,12 +231,18 @@ module DATAPATH_TB();
         if (read_a != 0) begin 
             $fdisplay(logs, "FAIL: R0 FORWARDING test failed, read_a = %h, expected 00", read_a);
             status = 1;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         end else begin
             $fdisplay(logs, "PASS: R0 FORWARDING test passed, read_a = %h, expected 00", read_a);
             status = 0;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         end
         @(posedge clk);
         status = 2;
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         @(negedge clk);
         status = 2;
         write_en = 0;
@@ -217,13 +250,18 @@ module DATAPATH_TB();
         write_addr = 0;
         rb_addr = 0;
         #0;
-        
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         if (read_b != expected_reg[rb_addr]) begin 
             $fdisplay(logs, "FAIL: R0 OVERWRITE test failed, read_b = %h, expected %h", read_b, expected_reg[rb_addr]);
             status = 1;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         end else begin
             $fdisplay(logs, "PASS: R0 OVERWRITE test passed, read_b = %h, expected %h", read_b, expected_reg[rb_addr]);
             status = 0;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         end  
         
 /////////////////////////////////////////////////////////////////////
@@ -233,6 +271,8 @@ module DATAPATH_TB();
         @(posedge clk);
         status = 2;
         RAM = 8'h6C;
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         @(negedge clk);
         status = 2;
         write_en = 1;
@@ -244,15 +284,23 @@ module DATAPATH_TB();
         ra_addr = 13;
         rb_addr = 13;
         #0;
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         if (read_a != expected_reg[ra_addr]) begin 
             $fdisplay(logs, "FAIL: MEMORY test failed, read_a = %h, expected %h", read_a, expected_reg[ra_addr]);
             status = 1;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         end else if (read_b != expected_reg[rb_addr]) begin 
             $fdisplay(logs, "FAIL: MEMORY test failed, read_b = %h, expected %h", read_b, expected_reg[rb_addr]);
             status = 1;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         end else begin
             $fdisplay(logs, "PASS: MEMORY test passed, read_a = %h, read_b = %h", read_a, read_b);
             status = 0;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         end
        
 /////////////////////////////////////////////////////////////////////
@@ -268,6 +316,8 @@ module DATAPATH_TB();
         ra_addr = 1;
         @(posedge clk);
         expected_reg[write_addr] = top_data;
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         @(negedge clk);
         write_en = 1;
         top_data = 1;
@@ -275,22 +325,33 @@ module DATAPATH_TB();
         rb_addr = 2;
         @(posedge clk);
         expected_reg[write_addr] = top_data;
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         @(negedge clk);
         alu_opcode = `ADD;
         write_alu = 1;
         write_addr = 1;
         for (i = 0; i < 64; i=i+1) begin
             @(posedge clk);
+            status = 2;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
             expected_reg[write_addr] = alu_out;
             if (read_a != expected_reg[ra_addr]) begin 
                 $fdisplay(logs, "FAIL: ADD test failed, read_a = %h, expected %h", read_a, expected_reg[ra_addr]);
                 status = 1;
+                $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
             end else if (read_b != expected_reg[rb_addr]) begin 
                 $fdisplay(logs, "FAIL: ADD test failed, read_b = %h, expected %h", read_b, expected_reg[rb_addr]);
                 status = 1;
+                $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
             end else begin
                 $fdisplay(logs, "PASS: ADD test passed, read_a = %h, read_b = %h", read_a, read_b);
                 status = 0;
+                $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
             end
         end
         @(negedge clk);
@@ -303,6 +364,8 @@ module DATAPATH_TB();
         write_en = 0;
         status = 2;
         @(posedge clk);
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         
 /////////////////////////////////////////////////////////////////////
 //BEGIN SUBTRACTION TEST
@@ -318,22 +381,33 @@ module DATAPATH_TB();
         rb_addr = 2;
         @(posedge clk);
         expected_reg[write_addr] = top_data;
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         @(negedge clk);
         alu_opcode = `SUB;
         write_alu = 1;
         write_addr = 1;
         for (i = 0; i < 13; i=i+1) begin
             @(posedge clk);
+            status = 2;
+            $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
             expected_reg[write_addr] = alu_out;
             if (read_a != expected_reg[ra_addr]) begin 
                 $fdisplay(logs, "FAIL: SUB test failed, read_a = %h, expected %h", read_a, expected_reg[ra_addr]);
                 status = 1;
+                $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
             end else if (read_b != expected_reg[rb_addr]) begin 
                 $fdisplay(logs, "FAIL: SUB test failed, read_b = %h, expected %h", read_b, expected_reg[rb_addr]);
                 status = 1;
+                $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
             end else begin
                 $fdisplay(logs, "PASS: SUB test passed, read_a = %h, read_b = %h", read_a, read_b);
                 status = 0;
+                $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
             end
         end
         @(negedge clk);
@@ -346,6 +420,8 @@ module DATAPATH_TB();
         write_en = 0;
         status = 2;
         @(posedge clk);
+        $fdisplay(excel_logs, "%0t | %d | %d | %d | %d | %b | %d | %d | %d | %b | %b | %b | %1d",
+                  $time, ra_addr, rb_addr, write_addr, top_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry, alu_imm_flag, status);
         $fdisplay(logs, "all tests complete");
         $fclose(logs);
         $fclose(excel_logs);
