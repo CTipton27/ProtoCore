@@ -29,7 +29,7 @@ testbenches = {
     "alu": {
         "tb": tb_dir / "ALU_TB.v",
         "src_files": [src_dir / "ALU.v"],
-        "xelab_opts": ["work.ALU_TB", "-s", "alu_tb_snapshot"],
+        "xelab_opts": ["work.ALU_TB", "-debug", "typical", "-s", "alu_tb_snapshot"],
         "xsim_opts": ["alu_tb_snapshot"],
         "log_file": "ALUlog.txt",
         "excel_log_file": "EALUlog.txt",
@@ -38,7 +38,7 @@ testbenches = {
     "reg_file": {
         "tb": tb_dir / "REG_TB.v",
         "src_files": [src_dir / "reg_file.v"],
-        "xelab_opts": ["work.REG_TB", "-s", "reg_tb_snapshot"],
+        "xelab_opts": ["work.REG_TB", "-debug", "typical", "-s", "reg_tb_snapshot"],
         "xsim_opts": ["reg_tb_snapshot"],
         "log_file": "REGlog.txt",
         "excel_log_file": "EREGlog.txt",
@@ -47,7 +47,7 @@ testbenches = {
     "datapath": {
         "tb": tb_dir / "DATAPATH_TB.v",
         "src_files": [src_dir / "datapath.v", src_dir / "ALU.v", src_dir / "reg_file.v"],
-        "xelab_opts": ["work.DATAPATH_TB", "-s", "datapath_tb_snapshot"],
+        "xelab_opts": ["work.DATAPATH_TB", "-debug", "typical", "-s", "datapath_tb_snapshot"],
         "xsim_opts": ["datapath_tb_snapshot"],
         "log_file": "DATAPATHlog.txt",
         "excel_log_file": "EDATAPATHlog.txt",
@@ -72,21 +72,28 @@ cmd_files = " ".join(str(f) for f in all_files)
 #builds xvlog, xelab, and xsim commands
 xvlog_cmd = f"xvlog {cmd_files}"
 xelab_cmd = "xelab " + " ".join(testbenches[choice]["xelab_opts"])
-xsim_cmd = "xsim " + " ".join(testbenches[choice]["xsim_opts"]) + " -runall" #Prevents clock from stalling xsim
+xsim_cmd = "xsim " + " ".join(testbenches[choice]["xsim_opts"]) + f" --wdb {choice}.wdb -tclbatch wave_tcls/{choice}.tcl"
 
 
 #joins full command for pass into subprocess.
 full_cmd = f"{settings} && {xvlog_cmd} && {xelab_cmd} && {xsim_cmd}"
 
-# Run and log output
-with open(log_file, 'a') as f:
-    result = subprocess.run(full_cmd, shell=True, stdout=f, stderr=subprocess.STDOUT)
+print(f"\nRunning simulation command:\n{full_cmd}\n")
 
-if result.returncode != 0:
-    print(f"Simulation failed with return code {result.returncode}")
-    sys.exit(result.returncode)
+with open(log_file, 'a') as f:
+    process = subprocess.Popen(full_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+
+    for line in process.stdout:
+        print(line, end='')  # live output to terminal
+        f.write(line)
+
+    process.wait()
+
+if process.returncode != 0:
+    print(f"\nSimulation failed with return code {process.returncode}")
+    sys.exit(process.returncode)
 else:
-    print("Simulation completed successfully.")
+    print("\nSimulation completed successfully.")
 
 # Extracts the plain log file from the scripts folder and moves it into logs
 vivado_default_log = script_dir / testbenches[choice]["log_file"]
@@ -115,16 +122,30 @@ if vivado_excel_log.exists():
 else:
     print(f"Expected log file {vivado_default_log} not found.")
 
+# Extracts the wdb file from the scripts folder and moves it into logs
+waveform_file = script_dir / f"{choice}.wdb"
+if waveform_file.exists():
+    # Destination path for waveform
+    dest_wave_path = current_log_dir /f"{choice}.wdb"
+    try:
+        # Moves file to log folder
+        shutil.move(str(waveform_file), str(dest_wave_path))
+        print(f"Moved waveform file to {dest_wave_path}")
+    except Exception as e:
+        print(f"Failed to move log file: {e}")
+else:
+    print(f"Expected waveform file {waveform_file} not found.")
+
 #removes unnecessary compilation files.
 for item in script_dir.iterdir():
     if item.is_file():
-        if item.suffix not in [".py", ".py~", ".asm"]:
+        if item.suffix not in [".py", ".py~", ".asm", ".wdb"]:
             try:
                 item.unlink()
             except Exception as e:
                 print(f"Warning: Failed to delete file {item}: {e}")
     elif item.is_dir():
-        if item.name not in [".idea", ".venv"]:
+        if item.name not in [".idea", ".venv", "wave_tcls"]:
             try:
                 shutil.rmtree(item)
             except Exception as e:

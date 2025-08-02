@@ -1,0 +1,21 @@
+log_wave /DATAPATH_TB/clk 
+log_wave /DATAPATH_TB/ra_addr 
+log_wave /DATAPATH_TB/rb_addr 
+log_wave /DATAPATH_TB/write_en 
+log_wave /DATAPATH_TB/write_alu 
+log_wave /DATAPATH_TB/is_load 
+log_wave /DATAPATH_TB/write_src 
+log_wave /DATAPATH_TB/write_addr 
+log_wave /DATAPATH_TB/write_data 
+log_wave /DATAPATH_TB/read_a 
+log_wave /DATAPATH_TB/read_b 
+log_wave /DATAPATH_TB/write_addr 
+log_wave /DATAPATH_TB/alu_imm_flag 
+log_wave /DATAPATH_TB/alu_zero 
+log_wave /DATAPATH_TB/alu_carry 
+log_wave /DATAPATH_TB/alu_out 
+log_wave /DATAPATH_TB/expected_reg 
+log_wave /DATAPATH_TB/RAM 
+log_wave /DATAPATH_TB/top_data 
+run all
+quit
