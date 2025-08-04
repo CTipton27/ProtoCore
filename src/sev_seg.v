@@ -9,13 +9,33 @@ module sev_seg(
     );
     
     reg [16:0] seg_counter;
-    wire [3:0] low_nibble, high_nibble;
     reg [1:0] digit_sel;
     reg [3:0] digit;
     
-    assign low_nibble = PC_addr[3:0];
-    assign high_nibble = PC_addr[7:4];
+    //Inits for double dabble algorithm
+    reg [19:0] shift_reg;
+    reg [3:0] hundreds;
+    reg [3:0] tens;
+    reg [3:0] ones;
+    integer i;
     
+   
+    always @ (*) begin //Double dabble algorithm for BIN to BCD
+        shift_reg = 0;
+        shift_reg [7:0] = PC_addr;
+        
+        for (i=0 ; i<8 ; i=i+1) begin //if any BCD sections >= 5, add 3 to carry properly.
+            if (shift_reg[11:8] >= 5) shift_reg[11:8] = shift_reg[11:8] + 3;
+            if (shift_reg[15:12] >= 5) shift_reg[15:12] = shift_reg[15:12] + 3;
+            if (shift_reg[19:16] >= 5) shift_reg[19:16] = shift_reg[19:16] + 3;
+            //shift left 1.
+            shift_reg = shift_reg << 1;
+        end
+        //extract BCD
+        hundreds = shift_reg[19:16];
+        tens     = shift_reg[15:12];
+        ones     = shift_reg[11:8];
+    end
    
     always @ (posedge clk) begin
         seg_counter <= seg_counter +1;
@@ -23,13 +43,15 @@ module sev_seg(
             seg_counter <= 0;
             digit_sel <= digit_sel + 1; //Rotates 0 thru 3
         end
-    end    
+    end 
+       
     always @ (*) begin
         case (digit_sel)
-            2'b00: begin digit = low_nibble; an = 4'b1110; end
-            2'b01: begin digit = high_nibble; an = 4'b1101;end
-            2'b10: begin digit = 4'b0; an = 4'b1011; end
-            2'b11: begin digit = 4'b0; an = 4'b0111;end
+            2'b00:begin   digit = ones;     an = 4'b1110;end //Ones
+            2'b01:begin   digit = tens;     an = 4'b1101;end //Tens
+            2'b10:begin   digit = hundreds; an = 4'b1011;end //Hundreds
+            2'b11:begin   digit = 0;        an = 4'b0111;end // thousands, always 0
+            default:begin digit = 0;        an = 4'b1111;end
         endcase
     end
     always @ (*) seg = hex_to_7seg(digit);
