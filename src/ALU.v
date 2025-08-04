@@ -20,6 +20,8 @@ module ALU(
     output reg carry
     );
     always @ (*) begin
+        carry = 0;
+        out = 8'b0;
         case (opcode)
             3'd0: {carry, out} = a + b;     //add
             3'd1: out = a - b;              //sub

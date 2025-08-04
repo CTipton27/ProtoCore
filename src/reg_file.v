@@ -15,8 +15,10 @@ module reg_file(
     assign read_a = (ra == 0) ? 8'b0 : regfile[ra];
     assign read_b = (rb == 0) ? 8'b0 : regfile[rb];
     
-    always @ (posedge clk) begin 
-        if (we && wa != 0) regfile[wa] <= wd;
+    always @(posedge clk) begin
+    if (wa == 0)
         regfile[0] <= 8'b0;
-    end
+    else if (we)
+        regfile[wa] <= wd;
+end
 endmodule

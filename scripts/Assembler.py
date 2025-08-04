@@ -58,7 +58,7 @@ formats = {
         "format": ['ra', 'imm'],
         "opcode": "1110"},
     'HALT': {
-        "format": [],
+        "format": ['imm'],
         "opcode": "1111"}
 }
 

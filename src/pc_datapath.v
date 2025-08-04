@@ -15,7 +15,9 @@ module pc_datapath(
     assign imm_signed = imm_value;
     assign pc_mux_signed = pc_mux;
     assign unsigned_sum = imm_value + pc_mux;
-    assign signed_sum = imm_signed + pc_mux_signed;
+    assign signed_sum = 1 + imm_signed + pc_mux_signed; //We also add 1 here since (as of now) the signed sum is only
+    //used for BEQ and BNE, which work from the next instruction in most arch's.
+    
     
     assign overwrite_data = (is_jump) ? unsigned_sum : signed_sum;
     
