@@ -14,9 +14,10 @@ module full_cpu(
     wire [2:0] alu_opcode;
     wire [3:0] ra_addr, rb_addr, rd_addr;
     wire write_alu, write_en, imm_flag, alu_zero, alu_carry, pc_en, pc_overwrite, HALT_flag;
-    wire ram_write_en, is_load, is_jump, s_clk, clk_mux;
-    wire [7:0] imm_value, read_a, read_b, pc_overwrite_data, pc_addr, alu_out, ram_addr, ram_read_data, ram_write_data, pc_datapath_mux;
-    wire [23:0] ROM_data;
+    wire ram_write_en, is_load, is_jump, s_clk, clk_mux, iRAM_write_enable, instruction_load_flag;
+    wire [7:0] imm_value, read_a, read_b, pc_overwrite_data, pc_addr, alu_out, ram_addr, ram_read_data, ram_write_data, pc_datapath_mux, iRAM_addr;
+    wire [7:0] extern_iRAM_addr;
+    wire [23:0] iRAM_data_in, iRAM_data_out;
     
     datapath datapath (
         .clk(clk_mux),
@@ -46,13 +47,16 @@ module full_cpu(
         .addr(pc_addr)
     );
     
-    instruction_rom ROM (
-        .addr(pc_addr),
-        .data(ROM_data)
+    instruction_ram iRAM (
+        .clk(clk),
+        .we(iRAM_write_enable),
+        .addr(iRAM_addr),
+        .data_in(iRAM_data_in),
+        .data_out(iRAM_data_out)
     );
     
     instruction_decode IM (
-        .instruction(ROM_data),
+        .instruction(iRAM_data_out),
         .rst(rst),
         .alu_zero(alu_zero),
         .write_alu(write_alu),
@@ -104,6 +108,8 @@ module full_cpu(
     assign pc_en = !HALT_flag;
     assign ram_addr = alu_out;
     assign clk_mux = clk_visual ? s_clk : clk;
+    
+    assign iRAM_addr = instruction_load_flag ? extern_iRAM_addr : pc_addr;
     
     assign led = HALT_flag ? {8'b0, imm_value} : {read_b, read_a};
 endmodule
