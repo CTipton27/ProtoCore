@@ -1,4 +1,12 @@
 `timescale 1ns / 1ps
+///////////////////////////////////////////////////////////////////
+//This module is the interface between the RX channel of UART and
+//The rest of the cpu core. when the system is HALTed, it will allow
+//recieving. this module just filters the uart packets and outputs
+//when a packet is ready, and what the packet is. As of now, it hears a packet_ack
+//signal, but does not act on it besides turning off packet_ready. Future updates will
+//add some error signaling when a packet was not acknowledged perhaps through a TX transmission.
+///////////////////////////////////////////////////////////////////
 module uart_rx(
     input clk,
     input HALT_flag,

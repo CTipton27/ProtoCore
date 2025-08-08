@@ -6,6 +6,7 @@ module full_cpu(
     input rst, //From xdc, corresponds to center button
     input [2:0] clk_speed,
     input clk_visual,
+    input UART_rx, //Used for instruction flashing
     output [6:0] seg, //7-seg will show PC counter
     output [3:0] an,
     output [15:0] led  //LEDs will show BIN data of read_b and read_a respectively
@@ -13,10 +14,10 @@ module full_cpu(
     );
     wire [2:0] alu_opcode;
     wire [3:0] ra_addr, rb_addr, rd_addr;
-    wire write_alu, write_en, imm_flag, alu_zero, alu_carry, pc_en, pc_overwrite, HALT_flag;
-    wire ram_write_en, is_load, is_jump, s_clk, clk_mux, iRAM_write_enable, instruction_load_flag;
+    wire write_alu, write_en, imm_flag, alu_zero, alu_carry, pc_en, pc_overwrite, HALT_flag, reset_PC, data_ack, cpu_paused;
+    wire ram_write_en, is_load, is_jump, s_clk, clk_mux, iRAM_write_enable, instruction_load_flag, packet_ready, packet_ack;
     wire [7:0] imm_value, read_a, read_b, pc_overwrite_data, pc_addr, alu_out, ram_addr, ram_read_data, ram_write_data, pc_datapath_mux, iRAM_addr;
-    wire [7:0] extern_iRAM_addr;
+    wire [7:0] extern_iRAM_addr, uart_packet;
     wire [23:0] iRAM_data_in, iRAM_data_out;
     
     datapath datapath (
@@ -52,7 +53,8 @@ module full_cpu(
         .we(iRAM_write_enable),
         .addr(iRAM_addr),
         .data_in(iRAM_data_in),
-        .data_out(iRAM_data_out)
+        .data_out(iRAM_data_out),
+        .data_ack(data_ack)
     );
     
     instruction_decode IM (
@@ -103,7 +105,33 @@ module full_cpu(
         .s_clk(s_clk)
     );
     
-    assign pc_datapath_mux = (is_jump) ? read_a : pc_addr;
+    uart_rx uart_rx(
+        .clk(clk),
+        .HALT_flag(HALT_flag),
+        .rst(rst),
+        .rx(UART_rx),
+        .packet_ack(packet_ack),
+        .packet_ready(packet_ready),
+        .uart_packet(uart_packet)
+    );
+    
+    cpu_instruction_loader cpu_instruction_loader(
+        .clk(clk),
+        .rst(rst),
+        .HALT_flag(HALT_flag),
+        .packet_ready(packet_ready),
+        .data_ack(data_ack),
+        .PC_addr(pc_addr),
+        .uart_packet(uart_packet),
+        .packet_ack(packet_ack),
+        .cpu_paused(cpu_paused),
+        .reset_PC(reset_PC),
+        .iRAM_write_enable(iRAM_write_enable),
+        .extern_iRAM_addr(extern_iRAM_addr),
+        .iRAM_data_in(iRAM_data_in)
+    );
+    
+    assign pc_datapath_mux = (reset_PC) ? 8'b0 : ((is_jump) ? read_a : pc_addr);
     assign ram_write_data = read_b;
     assign pc_en = !HALT_flag;
     assign ram_addr = alu_out;
@@ -113,3 +141,9 @@ module full_cpu(
     
     assign led = HALT_flag ? {8'b0, imm_value} : {read_b, read_a};
 endmodule
+
+//NEXT ADDITIONS:
+//- fix "instruction_load_flag" wire
+//- route "cpu_paused" wire
+//- fix "pc_en" wire when "reset_PC" is high
+//Unit Testing
