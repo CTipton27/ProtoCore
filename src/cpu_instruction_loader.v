@@ -31,6 +31,7 @@ module cpu_instruction_loader(
     reg [15:0] temp_word = 0;
     wire [23:0] full_word;
     wire wait_for_PC_reset;
+    reg allow_write;
 
     always @ (posedge clk) begin
 
@@ -62,16 +63,21 @@ module cpu_instruction_loader(
 
                         if (packets_held >= 2) begin //this will not trigger until 3rd recieve line (since packets_held is updated at the end of the clock)
                             packets_held <= 0;
-                            if ({uart_packet, temp_word} == 24'hFFFF00) begin
-                                // End flag 1: FFFF00
+                            if ({uart_packet, temp_word} == 24'hFF0000) begin
+                                // Start flag: FF0000
+                                allow_write <= 1;
+                            end else if ({uart_packet, temp_word} == 24'hFFFF00) begin
+                                // End flag 1: FFFF00, reset
                                 cpu_paused <= 1;
                                 reset_PC <= 1;
+                                allow_write <= 0;
                                 state <= END;
                             end else if ({uart_packet, temp_word} == 24'hFFF00) begin
-                                // End flag 2: FFF000
+                                // End flag 2: FFF000, do not reset
                                 cpu_paused <= 1;
+                                allow_write <= 0;
                                 state <= END;
-                            end else begin
+                            end else if (allow_write == 1) begin
                                 iRAM_data_in <= full_word;
                                 state <= SEND;
                             end

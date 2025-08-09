@@ -11,7 +11,9 @@ module instruction_ram(
     );
     reg [23:0] mem [255:0]; //256x24 rom
     
-    initial $readmemb("program.mem", mem);
+    initial begin
+        mem[0] = 24'hF000AA; //Custom HALT showing ready for UART
+    end
     
     always @ (posedge clk) begin
         if (we) begin
