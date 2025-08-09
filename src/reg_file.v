@@ -7,6 +7,7 @@ module reg_file(
     input [3:0] wa,
     input [7:0] wd,
     input we,
+    input cpu_paused,
     output [7:0] read_a,
     output [7:0] read_b
     );
@@ -18,7 +19,7 @@ module reg_file(
     always @(posedge clk) begin
     if (wa == 0)
         regfile[0] <= 8'b0;
-    else if (we)
+    else if (we && !cpu_paused)
         regfile[wa] <= wd;
 end
 endmodule

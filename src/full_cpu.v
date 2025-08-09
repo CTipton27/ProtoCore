@@ -14,7 +14,7 @@ module full_cpu(
     );
     wire [2:0] alu_opcode;
     wire [3:0] ra_addr, rb_addr, rd_addr;
-    wire write_alu, write_en, imm_flag, alu_zero, alu_carry, pc_en, pc_overwrite, HALT_flag, reset_PC, data_ack, cpu_paused;
+    wire write_alu, write_en, imm_flag, alu_zero, alu_carry, pc_en, pc_overwrite, HALT_flag, reset_PC, data_ack, cpu_paused, pc_overwrite_IM;
     wire ram_write_en, is_load, is_jump, s_clk, clk_mux, iRAM_write_enable, instruction_load_flag, packet_ready, packet_ack;
     wire [7:0] imm_value, read_a, read_b, pc_overwrite_data, pc_addr, alu_out, ram_addr, ram_read_data, ram_write_data, pc_datapath_mux, iRAM_addr;
     wire [7:0] extern_iRAM_addr, uart_packet;
@@ -32,6 +32,7 @@ module full_cpu(
         .write_en(write_en),
         .is_load(is_load),
         .imm_flag(imm_flag),
+        .cpu_paused(cpu_paused),
         .read_a(read_a), 
         .read_b(read_b),
         .alu_zero(alu_zero), 
@@ -70,7 +71,7 @@ module full_cpu(
         .write_en(write_en),
         .imm_flag(imm_flag),
         .HALT(HALT_flag),
-        .pc_overwrite(pc_overwrite),
+        .pc_overwrite(pc_overwrite_IM),
         .is_load(is_load),
         .ram_write_en(ram_write_en),
         .is_jump(is_jump)
@@ -88,6 +89,7 @@ module full_cpu(
         .addr(ram_addr),
         .write_data(ram_write_data),
         .write_en(ram_write_en),
+        .cpu_paused(cpu_paused),
         .read_data(ram_read_data)
     );
     
@@ -131,19 +133,14 @@ module full_cpu(
         .iRAM_data_in(iRAM_data_in)
     );
     
+    assign pc_overwrite = reset_PC ? 1 : pc_overwrite_IM;
     assign pc_datapath_mux = (reset_PC) ? 8'b0 : ((is_jump) ? read_a : pc_addr);
     assign ram_write_data = read_b;
-    assign pc_en = !HALT_flag;
+    assign pc_en = !(HALT_flag || reset_PC);
     assign ram_addr = alu_out;
     assign clk_mux = clk_visual ? s_clk : clk;
     
-    assign iRAM_addr = instruction_load_flag ? extern_iRAM_addr : pc_addr;
+    assign iRAM_addr = cpu_paused ? extern_iRAM_addr : pc_addr;
     
     assign led = HALT_flag ? {8'b0, imm_value} : {read_b, read_a};
 endmodule
-
-//NEXT ADDITIONS:
-//- fix "instruction_load_flag" wire
-//- route "cpu_paused" wire
-//- fix "pc_en" wire when "reset_PC" is high
-//Unit Testing

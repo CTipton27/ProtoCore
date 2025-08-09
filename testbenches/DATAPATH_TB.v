@@ -18,6 +18,7 @@ module DATAPATH_TB(
     reg [3:0] write_addr;
     reg [7:0] imm_value;
     reg write_en;
+    reg cpu_paused;
     wire [7:0] read_a;
     wire [7:0] read_b;
     wire alu_carry;
@@ -38,6 +39,7 @@ module DATAPATH_TB(
         .ra_addr(ra_addr), 
         .rb_addr(rb_addr),
         .write_en(write_en),
+        .cpu_paused(cpu_paused),
         .read_a(read_a), 
         .read_b(read_b),
         .alu_zero(alu_zero), 
@@ -78,6 +80,7 @@ module DATAPATH_TB(
               
         //Initialize all inputs to 0.
         @(negedge clk);
+        cpu_paused = 0;
         alu_opcode = 0;
         alu_en = 0;
         ra_addr = 0;

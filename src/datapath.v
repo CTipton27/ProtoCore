@@ -9,6 +9,7 @@ module datapath(
     input write_en,
     input is_load,
     input imm_flag,
+    input cpu_paused,
     output [7:0] read_a, read_b,
     output alu_zero, alu_carry,
     output [7:0] alu_out
@@ -34,6 +35,7 @@ module datapath(
         .wa(write_addr),
         .wd(write_data),
         .we(write_en),
+        .cpu_paused(cpu_paused),
         .read_a(ra_data),
         .read_b(rb_data)
     );

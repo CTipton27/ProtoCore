@@ -8,6 +8,7 @@ module REG_TB();
     reg [3:0] wa;
     reg [7:0] wd;
     reg we;
+    reg cpu_paused;
     wire [7:0] read_a;
     wire [7:0] read_b;
     reg [7:0] expected[15:0];
@@ -25,6 +26,7 @@ module REG_TB();
         .wa(wa),
         .wd(wd),
         .we(we),
+        .cpu_paused(cpu_paused),
         .read_a(read_a),
         .read_b(read_b)
     );
@@ -53,6 +55,7 @@ module REG_TB();
         rb=0;
         we = 0;
         rst = 1;
+        cpu_paused = 0;
         @(posedge clk);
         
         rst=0;
