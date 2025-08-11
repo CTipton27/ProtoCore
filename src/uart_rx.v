@@ -30,7 +30,7 @@ module uart_rx(
 
     reg [1:0] state = IDLE;
     reg [13:0] tick_counter = 0;
-    reg [2:0] bit_count = 0;
+    reg [3:0] bit_count = 0;
     reg [7:0] shift_reg = 0;
 
     always @(posedge clk) begin

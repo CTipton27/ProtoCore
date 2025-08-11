@@ -28,10 +28,9 @@ module cpu_instruction_loader(
 
     reg [1:0] state = IDLE;
     reg [1:0] packets_held = 0;
-    reg [15:0] temp_word = 0;
-    wire [23:0] full_word;
+    reg [23:0] full_word = 24'b0;
     wire wait_for_PC_reset;
-    reg allow_write;
+    reg allow_write = 0;
 
     always @ (posedge clk) begin
 
@@ -43,7 +42,6 @@ module cpu_instruction_loader(
             iRAM_write_enable <= 0;
             extern_iRAM_addr <= 0;
             iRAM_data_in <= 0;
-            temp_word <= 0;
             packets_held <= 0;
         end else begin
             case (state)
@@ -53,26 +51,19 @@ module cpu_instruction_loader(
                         state <= RECEIVE;
                     if (!packet_ready & packet_ack)
                         packet_ack <= 0;
-                end
-
-                RECEIVE: begin
-                    if (packet_ready & !packet_ack) begin
-                        temp_word <= {uart_packet, temp_word[15:8]};
-                        packets_held <= packets_held + 1;
-                        packet_ack <= 1;
-
-                        if (packets_held >= 2) begin //this will not trigger until 3rd recieve line (since packets_held is updated at the end of the clock)
+                        
+                    if (packets_held == 3) begin
                             packets_held <= 0;
-                            if ({uart_packet, temp_word} == 24'hFF0000) begin
+                            if (full_word == 24'hFF0000) begin
                                 // Start flag: FF0000
                                 allow_write <= 1;
-                            end else if ({uart_packet, temp_word} == 24'hFFFF00) begin
+                            end else if (full_word == 24'hFFFF00) begin
                                 // End flag 1: FFFF00, reset
                                 cpu_paused <= 1;
                                 reset_PC <= 1;
                                 allow_write <= 0;
                                 state <= END;
-                            end else if ({uart_packet, temp_word} == 24'hFFF00) begin
+                            end else if (full_word == 24'hFFF000) begin
                                 // End flag 2: FFF000, do not reset
                                 cpu_paused <= 1;
                                 allow_write <= 0;
@@ -81,9 +72,15 @@ module cpu_instruction_loader(
                                 iRAM_data_in <= full_word;
                                 state <= SEND;
                             end
-                        end else begin
-                            state <= IDLE;
                         end
+                end
+
+                RECEIVE: begin
+                    if (packet_ready & !packet_ack) begin
+                        full_word <= {uart_packet, full_word[23:8]};
+                        packets_held <= packets_held + 1;
+                        packet_ack <= 1;
+                        state <= IDLE;
                     end
                 end
 
@@ -93,6 +90,7 @@ module cpu_instruction_loader(
                         iRAM_write_enable <= 0;
                         extern_iRAM_addr <= extern_iRAM_addr + 1;
                         state <= IDLE;
+                        full_word <= 24'b0;
                     end
                 end
 
@@ -108,6 +106,8 @@ module cpu_instruction_loader(
 
                     if (!cpu_paused)
                         state <= IDLE;
+                        
+                    full_word <= 24'b0;
                 end
 
                 default: state <= IDLE;
@@ -116,5 +116,4 @@ module cpu_instruction_loader(
     end
     
     assign wait_for_PC_reset = (PC_addr == 8'b0) ? 0 : 1; //wire only high if PC_addr is 8'b0
-    assign full_word = {uart_packet , temp_word};
 endmodule
