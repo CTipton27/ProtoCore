@@ -34,10 +34,10 @@ module cpu_instruction_loader(
 
     always @ (posedge clk) begin
 
-        if (rst || !HALT_flag) begin
+        if (rst) begin
             state <= IDLE;
             packet_ack <= 0;
-            cpu_paused <= 1;
+            cpu_paused <= 0;
             reset_PC <= 0;
             iRAM_write_enable <= 0;
             extern_iRAM_addr <= 0;
@@ -54,18 +54,17 @@ module cpu_instruction_loader(
                         
                     if (packets_held == 3) begin
                             packets_held <= 0;
-                            if (full_word == 24'hFF0000) begin
+                            if (full_word == 24'hFF0000 && HALT_flag) begin
                                 // Start flag: FF0000
                                 allow_write <= 1;
+                                cpu_paused <= 1;
                             end else if (full_word == 24'hFFFF00) begin
                                 // End flag 1: FFFF00, reset
-                                cpu_paused <= 1;
                                 reset_PC <= 1;
                                 allow_write <= 0;
                                 state <= END;
                             end else if (full_word == 24'hFFF000) begin
                                 // End flag 2: FFF000, do not reset
-                                cpu_paused <= 1;
                                 allow_write <= 0;
                                 state <= END;
                             end else if (allow_write == 1) begin

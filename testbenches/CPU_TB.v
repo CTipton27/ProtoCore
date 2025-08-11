@@ -75,10 +75,10 @@ module CPU_TB;
         
         //Stop word w/ Reset
         send_uart_byte(8'h00);
-        send_uart_byte(8'h0F);
+        send_uart_byte(8'hF0);
         send_uart_byte(8'hFF);
 
-        #10000;
+        #100000;
         $stop;
     end
 endmodule

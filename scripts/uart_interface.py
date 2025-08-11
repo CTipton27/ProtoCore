@@ -20,8 +20,8 @@ if ser.is_open:
     print("Connected...")
     confirm_load = input("Load program.mem contents? y/n: ")
     reset_pc = input("Reset program counter after write? y/n: ")
-    if confirm_load == "y":
-        ser.write(bytes([0xFF, 0x00, 0x00]))
+    if confirm_load.lower().strip() == "y":
+        ser.write(bytes([0x00, 0x00, 0xFF]))
         for line in mem_file:
             line.strip()
             instr_val = int(line, 2)
@@ -30,10 +30,10 @@ if ser.is_open:
             b2 = (instr_val >> 16) & 0xFF
 
             ser.write(bytes([b0, b1, b2]))
-        if reset_pc == "y":
-            ser.write(bytes([0xFF, 0xFF, 0x00]))
+        if reset_pc.lower().strip() == "y":
+            ser.write(bytes([0x00, 0xFF, 0xFF]))
         else:
-            ser.write(bytes([0xFF, 0xF0, 0x00]))
+            ser.write(bytes([0x00, 0xF0, 0xFF]))
 
 else:
     print("Error: Failed to open serial port.")

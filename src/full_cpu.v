@@ -109,7 +109,6 @@ module full_cpu(
     
     uart_rx uart_rx(
         .clk(clk),
-        .HALT_flag(HALT_flag),
         .rst(rst),
         .rx(UART_rx),
         .packet_ack(packet_ack),
@@ -136,10 +135,9 @@ module full_cpu(
     assign pc_overwrite = reset_PC ? 1 : pc_overwrite_IM;
     assign pc_datapath_mux = (reset_PC) ? 8'b0 : ((is_jump) ? read_a : pc_addr);
     assign ram_write_data = read_b;
-    assign pc_en = !(HALT_flag || reset_PC);
+    assign pc_en = !(HALT_flag || cpu_paused);
     assign ram_addr = alu_out;
     assign clk_mux = clk_visual ? s_clk : clk;
-    
     assign iRAM_addr = cpu_paused ? extern_iRAM_addr : pc_addr;
     
     assign led = HALT_flag ? {8'b0, imm_value} : {read_b, read_a};

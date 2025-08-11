@@ -9,7 +9,6 @@
 ///////////////////////////////////////////////////////////////////
 module uart_rx(
     input clk,
-    input HALT_flag,
     input rst,
     input rx,
     input packet_ack,
@@ -34,7 +33,7 @@ module uart_rx(
     reg [7:0] shift_reg = 0;
 
     always @(posedge clk) begin
-        if (rst || !HALT_flag) begin
+        if (rst) begin
             state         <= IDLE;
             tick_counter  <= 0;
             bit_count     <= 0;
@@ -48,7 +47,7 @@ module uart_rx(
 
             case (state)
                 IDLE: begin
-                    if (rx == 0 && HALT_flag) begin
+                    if (rx == 0) begin
                         if (!packet_ready) begin
                             tick_counter <= 0;
                             state <= START;
