@@ -51,8 +51,8 @@ module CPU_TB;
         clk_speed = 3'b000;
         clk_visual = 0;
         UART_rx = 1; // idle high for UART
-        rst = 1;
-        #1000;
+//        rst = 1;
+//        #1000;
         rst = 0;
 
         // Wait for rst to cool off
@@ -63,22 +63,101 @@ module CPU_TB;
         send_uart_byte(8'h00);
         send_uart_byte(8'hFF);
         
-        //Data word 1
-        send_uart_byte(8'hF0);
-        send_uart_byte(8'h00);
-        send_uart_byte(8'h6C);
-        
-        //Data word 2
-        send_uart_byte(8'hAC);
-        send_uart_byte(8'hF2);
-        send_uart_byte(8'h8F);
+send_uart_byte(8'h80);
+send_uart_byte(8'h01);
+send_uart_byte(8'h0A);
+
+send_uart_byte(8'h80);
+send_uart_byte(8'h02);
+send_uart_byte(8'h14);
+
+send_uart_byte(8'h80);
+send_uart_byte(8'h03);
+send_uart_byte(8'h00);
+
+send_uart_byte(8'h80);
+send_uart_byte(8'h04);
+send_uart_byte(8'h05);
+
+send_uart_byte(8'h80);
+send_uart_byte(8'h05);
+send_uart_byte(8'h01);
+
+send_uart_byte(8'h03);
+send_uart_byte(8'h13);
+send_uart_byte(8'h00);
+
+send_uart_byte(8'h14);
+send_uart_byte(8'h14);
+send_uart_byte(8'h00);
+
+send_uart_byte(8'hD4);
+send_uart_byte(8'h00);
+send_uart_byte(8'hFD);
+
+send_uart_byte(8'h80);
+send_uart_byte(8'h06);
+send_uart_byte(8'h32);
+
+send_uart_byte(8'hC3);
+send_uart_byte(8'h60);
+send_uart_byte(8'h0A);
+
+send_uart_byte(8'h40);
+send_uart_byte(8'h27);
+send_uart_byte(8'h00);
+
+send_uart_byte(8'h31);
+send_uart_byte(8'h28);
+send_uart_byte(8'h00);
+
+send_uart_byte(8'h21);
+send_uart_byte(8'h29);
+send_uart_byte(8'h00);
+
+send_uart_byte(8'h51);
+send_uart_byte(8'h0A);
+send_uart_byte(8'h00);
+
+send_uart_byte(8'h61);
+send_uart_byte(8'h0B);
+send_uart_byte(8'h00);
+
+send_uart_byte(8'h72);
+send_uart_byte(8'h0C);
+send_uart_byte(8'h00);
+
+send_uart_byte(8'h80);
+send_uart_byte(8'h0D);
+send_uart_byte(8'h03);
+
+send_uart_byte(8'hBD);
+send_uart_byte(8'h30);
+send_uart_byte(8'h01);
+
+send_uart_byte(8'hAD);
+send_uart_byte(8'h0E);
+send_uart_byte(8'h01);
+
+send_uart_byte(8'hE0);
+send_uart_byte(8'h00);
+send_uart_byte(8'h05);
+
+send_uart_byte(8'hF0);
+send_uart_byte(8'h00);
+send_uart_byte(8'h01);
+
+send_uart_byte(8'hF0);
+send_uart_byte(8'h00);
+send_uart_byte(8'h02);
+
         
         //Stop word w/ Reset
         send_uart_byte(8'h00);
         send_uart_byte(8'hF0);
         send_uart_byte(8'hFF);
 
-        #100000;
+        #10000000;
         $stop;
     end
 endmodule

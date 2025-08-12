@@ -6,8 +6,8 @@ module instruction_ram(
     input we,
     input [7:0] addr,
     input [23:0] data_in,
-    output reg [23:0] data_out,
-    output reg data_ack
+    output [23:0] data_out,
+    output reg data_ack = 0
     );
     reg [23:0] mem [255:0]; //256x24 rom
     
@@ -21,7 +21,7 @@ module instruction_ram(
             mem[addr] <= data_in;
         end else
             data_ack <= 0;
-            
-        data_out <= mem[addr];
     end
+    
+    assign data_out = mem[addr];
 endmodule

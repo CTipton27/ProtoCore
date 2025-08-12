@@ -4,8 +4,8 @@
 module sev_seg(
     input clk, //Currently accepts 100MHZ
     input [7:0] PC_addr,
-    output reg [6:0] seg,
-    output reg [3:0] an
+    output reg [6:0] seg = 0,
+    output reg [3:0] an = 0
     );
     
     reg [16:0] seg_counter;

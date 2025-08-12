@@ -13,12 +13,12 @@ module cpu_instruction_loader(
     input data_ack,
     input [7:0] PC_addr,
     input [7:0] uart_packet,
-    output reg packet_ack,
-    output reg cpu_paused,
-    output reg reset_PC,
-    output reg iRAM_write_enable,
-    output reg [7:0] extern_iRAM_addr,
-    output reg [23:0] iRAM_data_in
+    output reg packet_ack = 0,
+    output reg cpu_paused = 0,
+    output reg reset_PC = 0,
+    output reg iRAM_write_enable = 0,
+    output reg [7:0] extern_iRAM_addr = 0,
+    output reg [23:0] iRAM_data_in = 0
     );
 
     parameter [1:0] IDLE    = 2'b00,

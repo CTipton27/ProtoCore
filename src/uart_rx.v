@@ -12,8 +12,8 @@ module uart_rx(
     input rst,
     input rx,
     input packet_ack,
-    output reg packet_ready,
-    output reg [7:0] uart_packet
+    output reg packet_ready = 0,
+    output reg [7:0] uart_packet = 0
     );
 
     parameter BAUD_RATE = 115200;

@@ -9,7 +9,7 @@ module program_counter(
     output [7:0] addr
     );
     
-    reg [7:0] proc_addr;
+    reg [7:0] proc_addr = 0;
     always @ (posedge clk) begin 
         if (rst) proc_addr <= 8'b0;//Always start at instruction 0
         else if (overwrite) proc_addr <= overwrite_data; //if overwriting, move to overwritten data.
