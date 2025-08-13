@@ -94,7 +94,7 @@ module full_cpu(
     );
     
     pc_datapath pc_datapath(
-        .pc_overwrite(pc_overwrite),
+        .reset_PC(reset_PC),
         .imm_value(imm_value),
         .pc_mux(pc_datapath_mux),
         .is_jump(is_jump),
