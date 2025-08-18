@@ -58,12 +58,12 @@ module cpu_instruction_loader(
                                 // Start flag: FF0000
                                 allow_write <= 1;
                                 cpu_paused <= 1;
-                            end else if (full_word == 24'hFFFF00) begin
+                            end else if (cpu_paused && full_word == 24'hFFFF00) begin
                                 // End flag 1: FFFF00, reset
                                 reset_PC <= 1;
                                 allow_write <= 0;
                                 state <= END;
-                            end else if (full_word == 24'hFFF000) begin
+                            end else if (cpu_paused && full_word == 24'hFFF000) begin
                                 // End flag 2: FFF000, do not reset
                                 allow_write <= 0;
                                 state <= END;

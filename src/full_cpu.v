@@ -60,7 +60,6 @@ module full_cpu(
     
     instruction_decode IM (
         .instruction(iRAM_data_out),
-        .rst(rst),
         .alu_zero(alu_zero),
         .write_alu(write_alu),
         .alu_opcode(alu_opcode),

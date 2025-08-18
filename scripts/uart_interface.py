@@ -19,8 +19,8 @@ ser = serial.Serial(port, 115200, timeout=1)
 if ser.is_open:
     print("Connected...")
     confirm_load = input("Load program.mem contents? y/n: ")
-    reset_pc = input("Reset program counter after write? y/n: ")
     if confirm_load.lower().strip() == "y":
+        reset_pc = input("Reset program counter after write? y/n: ")
         ser.write(bytes([0x00, 0x00, 0xFF]))
         for line in mem_file:
             line.strip()
