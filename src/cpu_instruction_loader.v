@@ -106,6 +106,7 @@ module cpu_instruction_loader(
                     if (!cpu_paused)
                         state <= IDLE;
                         
+                    extern_iRAM_addr <= 0;
                     full_word <= 24'b0;
                 end
 
