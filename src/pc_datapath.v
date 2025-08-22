@@ -2,7 +2,7 @@
 //FILE: pc_datapath.v
 
 module pc_datapath(
-    input pc_overwrite,
+    input reset_PC,
     input [7:0] imm_value,
     input [7:0] pc_mux,
     input is_jump,
@@ -15,8 +15,10 @@ module pc_datapath(
     assign imm_signed = imm_value;
     assign pc_mux_signed = pc_mux;
     assign unsigned_sum = imm_value + pc_mux;
-    assign signed_sum = imm_signed + pc_mux_signed;
+    assign signed_sum = 1 + imm_signed + pc_mux_signed; //We also add 1 here since (as of now) the signed sum is only
+    //used for BEQ and BNE, which work from the next instruction in most arch's.
     
-    assign overwrite_data = (is_jump) ? unsigned_sum : signed_sum;
+    
+    assign overwrite_data = reset_PC ? 8'b0 : (is_jump ? unsigned_sum : signed_sum);
     
 endmodule

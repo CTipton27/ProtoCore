@@ -9,8 +9,8 @@ run_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 log_name = input("Please enter a name for the log directory: ")
 
 #Files associated with sim software. change as needed for your vivado installation
-vivado_settings_desktop = Path("D:/Vivado/2025.1/Vivado/settings64.bat")
-vivado_settings_laptop  = Path("C:/Xilinx/Vivado/2024.2/settings64.bat")
+settings = Path("C:/Xilinx/Vivado/2024.2/settings64.bat")
+settings = f'"{settings}"'
 
 # Grabs all directories needed to run scripts and log files.
 root = Path(__file__).resolve().parent.parent
@@ -49,20 +49,6 @@ testbenches = {
         "log_file": "DATAPATHlog.txt"
     }
 }
-
-#This section of code is specific to me, as I am running this on two different devices
-#with vivado installations in different directories.
-settings = "dev/null"
-device = input("Which device are you on? (l/d)? ").strip().lower()
-if device == "l":
-    settings = vivado_settings_laptop
-elif device == "d":
-    settings = vivado_settings_desktop
-else:
-    print("Invalid choice")
-    sys.exit(1)
-settings = f'"{settings}"'
-
 
 choice = input("Which testbench do you want to run? (alu, reg_file, datapath)? ").strip().lower()
 
@@ -111,13 +97,13 @@ else:
 
 for item in script_dir.iterdir():
     if item.is_file():
-        if item.suffix not in [".py", ".py~"]:
+        if item.suffix not in [".py", ".py~", ".asm"]:
             try:
                 item.unlink()
             except Exception as e:
                 print(f"Warning: Failed to delete file {item}: {e}")
     elif item.is_dir():
-        if item.name not in [".idea", ".venv"]:
+        if item.name not in [".idea", ".venv", "uart_programs"]:
             try:
                 shutil.rmtree(item)
             except Exception as e:

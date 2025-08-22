@@ -3,18 +3,17 @@
 
 module instruction_decode(
     input [23:0] instruction,
-    input rst,
     input alu_zero,
-    output reg write_alu,
-    output reg [2:0] alu_opcode,
-    output reg [7:0] imm_value,
-    output reg [3:0] write_addr, ra_addr, rb_addr,
-    output reg write_en,
-    output reg ram_write_en,
-    output reg imm_flag,
-    output reg HALT,
-    output reg pc_overwrite,
-    output reg is_load,
+    output reg write_alu = 0,
+    output reg [2:0] alu_opcode = 0,
+    output reg [7:0] imm_value = 0,
+    output reg [3:0] write_addr = 0, ra_addr = 0, rb_addr = 0,
+    output reg write_en = 0,
+    output reg ram_write_en = 0,
+    output reg imm_flag = 0,
+    output reg HALT = 0,
+    output reg pc_overwrite = 0,
+    output reg is_load = 0,
     output is_jump
     );
     wire [3:0] opcode = instruction [23:20];
@@ -92,7 +91,7 @@ module instruction_decode(
                 HALT = 1;
                 write_en = 0;
                 ram_write_en = 0;
-				imm_value = data;
+                imm_value = data;
                 end
             default: begin end
         endcase

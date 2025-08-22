@@ -15,11 +15,13 @@ module ALU(
     input [7:0] a,
     input [7:0] b,
     input [2:0] opcode,
-    output reg [7:0] out,
-    output reg zero,
-    output reg carry
+    output reg [7:0] out = 0,
+    output reg zero = 0,
+    output reg carry = 0
     );
     always @ (*) begin
+        carry = 0;
+        out = 8'b0;
         case (opcode)
             3'd0: {carry, out} = a + b;     //add
             3'd1: out = a - b;              //sub
