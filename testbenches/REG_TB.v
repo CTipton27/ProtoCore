@@ -2,7 +2,6 @@
 
 module REG_TB();
     reg clk;
-    reg rst;
     reg [3:0] ra;
     reg [3:0] rb;
     reg [3:0] wa;
@@ -20,7 +19,6 @@ module REG_TB();
 
     reg_file DUT(
         .clk(clk),
-        .rst(rst),
         .ra(ra),
         .rb(rb),
         .wa(wa),
@@ -54,12 +52,9 @@ module REG_TB();
         ra=0;
         rb=0;
         we = 0;
-        rst = 1;
         cpu_paused = 0;
         @(posedge clk);
-        
-        rst=0;
-        @(posedge clk);
+   
         // Write unique values to every register
         for (i = 0; i < 16; i = i + 1) begin
             we = 1;

@@ -1,0 +1,57 @@
+REG Testbench Log
+Time: 0 | ra:  0 | rb:  0 | wa:  0 | wd: 00 | we: 0 | read_a: 00 | read_b: 00
+Time: 5000 | ra:  0 | rb:  0 | wa:  0 | wd: 00 | we: 1 | read_a: 00 | read_b: 00
+Time: 15000 | ra:  0 | rb:  0 | wa:  1 | wd: 11 | we: 1 | read_a: 00 | read_b: 00
+Time: 25000 | ra:  0 | rb:  0 | wa:  2 | wd: 22 | we: 1 | read_a: 00 | read_b: 00
+Time: 35000 | ra:  0 | rb:  0 | wa:  3 | wd: 33 | we: 1 | read_a: 00 | read_b: 00
+Time: 45000 | ra:  0 | rb:  0 | wa:  4 | wd: 44 | we: 1 | read_a: 00 | read_b: 00
+Time: 55000 | ra:  0 | rb:  0 | wa:  5 | wd: 55 | we: 1 | read_a: 00 | read_b: 00
+Time: 65000 | ra:  0 | rb:  0 | wa:  6 | wd: 66 | we: 1 | read_a: 00 | read_b: 00
+Time: 75000 | ra:  0 | rb:  0 | wa:  7 | wd: 77 | we: 1 | read_a: 00 | read_b: 00
+Time: 85000 | ra:  0 | rb:  0 | wa:  8 | wd: 88 | we: 1 | read_a: 00 | read_b: 00
+Time: 95000 | ra:  0 | rb:  0 | wa:  9 | wd: 99 | we: 1 | read_a: 00 | read_b: 00
+Time: 105000 | ra:  0 | rb:  0 | wa: 10 | wd: aa | we: 1 | read_a: 00 | read_b: 00
+Time: 115000 | ra:  0 | rb:  0 | wa: 11 | wd: bb | we: 1 | read_a: 00 | read_b: 00
+Time: 125000 | ra:  0 | rb:  0 | wa: 12 | wd: cc | we: 1 | read_a: 00 | read_b: 00
+Time: 135000 | ra:  0 | rb:  0 | wa: 13 | wd: dd | we: 1 | read_a: 00 | read_b: 00
+Time: 145000 | ra:  0 | rb:  0 | wa: 14 | wd: ee | we: 1 | read_a: 00 | read_b: 00
+Time: 155000 | ra:  0 | rb:  0 | wa: 15 | wd: ff | we: 1 | read_a: 00 | read_b: 00
+Time: 165000 | ra:  0 | rb:  0 | wa: 15 | wd: ff | we: 0 | read_a: 00 | read_b: 00
+Time: 175000 | ra:  0 | rb: 15 | wa: 15 | wd: ff | we: 0 | read_a: 00 | read_b: ff
+PASS at 185000: read_a[0] = expected = 00, read_b[15] = expected = ff
+Time: 185000 | ra:  1 | rb: 14 | wa: 15 | wd: ff | we: 0 | read_a: 11 | read_b: ee
+PASS at 195000: read_a[1] = expected = 11, read_b[14] = expected = ee
+Time: 195000 | ra:  2 | rb: 13 | wa: 15 | wd: ff | we: 0 | read_a: 22 | read_b: dd
+PASS at 205000: read_a[2] = expected = 22, read_b[13] = expected = dd
+Time: 205000 | ra:  3 | rb: 12 | wa: 15 | wd: ff | we: 0 | read_a: 33 | read_b: cc
+PASS at 215000: read_a[3] = expected = 33, read_b[12] = expected = cc
+Time: 215000 | ra:  4 | rb: 11 | wa: 15 | wd: ff | we: 0 | read_a: 44 | read_b: bb
+PASS at 225000: read_a[4] = expected = 44, read_b[11] = expected = bb
+Time: 225000 | ra:  5 | rb: 10 | wa: 15 | wd: ff | we: 0 | read_a: 55 | read_b: aa
+PASS at 235000: read_a[5] = expected = 55, read_b[10] = expected = aa
+Time: 235000 | ra:  6 | rb:  9 | wa: 15 | wd: ff | we: 0 | read_a: 66 | read_b: 99
+PASS at 245000: read_a[6] = expected = 66, read_b[9] = expected = 99
+Time: 245000 | ra:  7 | rb:  8 | wa: 15 | wd: ff | we: 0 | read_a: 77 | read_b: 88
+PASS at 255000: read_a[7] = expected = 77, read_b[8] = expected = 88
+Time: 255000 | ra:  8 | rb:  7 | wa: 15 | wd: ff | we: 0 | read_a: 88 | read_b: 77
+PASS at 265000: read_a[8] = expected = 88, read_b[7] = expected = 77
+Time: 265000 | ra:  9 | rb:  6 | wa: 15 | wd: ff | we: 0 | read_a: 99 | read_b: 66
+PASS at 275000: read_a[9] = expected = 99, read_b[6] = expected = 66
+Time: 275000 | ra: 10 | rb:  5 | wa: 15 | wd: ff | we: 0 | read_a: aa | read_b: 55
+PASS at 285000: read_a[10] = expected = aa, read_b[5] = expected = 55
+Time: 285000 | ra: 11 | rb:  4 | wa: 15 | wd: ff | we: 0 | read_a: bb | read_b: 44
+PASS at 295000: read_a[11] = expected = bb, read_b[4] = expected = 44
+Time: 295000 | ra: 12 | rb:  3 | wa: 15 | wd: ff | we: 0 | read_a: cc | read_b: 33
+PASS at 305000: read_a[12] = expected = cc, read_b[3] = expected = 33
+Time: 305000 | ra: 13 | rb:  2 | wa: 15 | wd: ff | we: 0 | read_a: dd | read_b: 22
+PASS at 315000: read_a[13] = expected = dd, read_b[2] = expected = 22
+Time: 315000 | ra: 14 | rb:  1 | wa: 15 | wd: ff | we: 0 | read_a: ee | read_b: 11
+PASS at 325000: read_a[14] = expected = ee, read_b[1] = expected = 11
+Time: 325000 | ra: 15 | rb:  0 | wa: 15 | wd: ff | we: 0 | read_a: ff | read_b: 00
+PASS at 335000: read_a[15] = expected = ff, read_b[0] = expected = 00
+Time: 335000 | ra: 15 | rb:  0 | wa:  3 | wd: aa | we: 1 | read_a: ff | read_b: 00
+Time: 345000 | ra:  3 | rb:  3 | wa:  3 | wd: aa | we: 0 | read_a: aa | read_b: aa
+PASS: Overwrite test suceeded, read_a = aa, expected aa
+Time: 355000 | ra:  3 | rb:  3 | wa:  5 | wd: 11 | we: 0 | read_a: aa | read_b: aa
+Time: 365000 | ra:  5 | rb:  3 | wa:  5 | wd: 11 | we: 0 | read_a: 55 | read_b: aa
+PASS: Write enable off test suceeded, read_a = 55, expected 55

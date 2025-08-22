@@ -10,19 +10,21 @@
 
 module DATAPATH_TB(
     );
-    reg [2:0] alu_opcode;
     reg clk;
-    reg alu_en;
+    reg write_alu;
+    reg [2:0] alu_opcode;
+    reg [7:0] ram_data, imm_data;
     reg [3:0] ra_addr;
     reg [3:0] rb_addr;
     reg [3:0] write_addr;
-    reg [7:0] imm_value;
     reg write_en;
+    reg is_load;
+    reg imm_flag;
     reg cpu_paused;
     wire [7:0] read_a;
     wire [7:0] read_b;
     wire alu_carry;
-    wire alu_zero;
+    wire alu_zero;    
     
     integer logs;
     integer i;
@@ -31,20 +33,23 @@ module DATAPATH_TB(
     
     datapath DUT(
         .clk(clk),
-        .rst(rst),
-        .alu_en(alu_en),
+        .write_alu(write_alu),
         .alu_opcode(alu_opcode),
-        .imm_value(imm_value),
+        .imm_data(imm_data),
+        .ram_data(ram_data),
         .write_addr(write_addr), 
         .ra_addr(ra_addr), 
         .rb_addr(rb_addr),
         .write_en(write_en),
+        .is_load(is_load),
+        .imm_flag(imm_flag),
         .cpu_paused(cpu_paused),
         .read_a(read_a), 
         .read_b(read_b),
         .alu_zero(alu_zero), 
-        .alu_carry(alu_carry)
+        .alu_carry(alu_carry) 
     );
+    
     always @(*) begin
         case (alu_opcode)
             `ADD: op_name = "ADD";
@@ -76,32 +81,37 @@ module DATAPATH_TB(
 		end
 	$fdisplay(logs, "DATAPATH Testbench Log");
     $fmonitor(logs, "Time: %0t | ra: %d | rb: %d | wa: %d | uwd: %h | we: %b | read_a: %h | read_b: %h | opcode: %d | zero: %b | carry: %b |",
-              $time, ra_addr, rb_addr, write_addr, imm_value, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry);
+              $time, ra_addr, rb_addr, write_addr, imm_data, write_en, read_a, read_b, alu_opcode, alu_zero, alu_carry);
               
         //Initialize all inputs to 0.
         @(negedge clk);
         cpu_paused = 0;
         alu_opcode = 0;
-        alu_en = 0;
+        write_alu = 0;
         ra_addr = 0;
         rb_addr = 0;
         write_addr = 0;
-        imm_value = 0;
+        imm_data = 0;
+        ram_data = 0;
         write_en = 0;
+        is_load = 0;
+        imm_flag = 0;
         @(posedge clk);
         
 //----------------------DEFAULT REG FUNCTIONS----------------------------//
         // Write unique values to every register
         for (i = 0; i < 16; i = i + 1) begin
             @(negedge clk);
+            imm_flag = 1;
             write_en = 1;
             write_addr = i;
-            imm_value = i * 8'h11; // 0x00, 0x11, ..., 0xFF
+            imm_data = i * 8'h11; // 0x00, 0x11, ..., 0xFF
             @(posedge clk);
         end
         
         @(negedge clk)
         write_en = 0;
+        imm_flag = 0;
         
         // Read back and verify
         for (i = 0; i < 16; i = i + 1) begin
@@ -114,11 +124,13 @@ module DATAPATH_TB(
         @(negedge clk);
         write_en = 1;
         write_addr = 3;
-        imm_value = 8'hAA;
+        imm_flag = 1;
+        imm_data = 8'hAA;
         @(posedge clk);
         
         @(negedge clk);
         write_en = 0;
+        imm_flag = 0;
         #2;
         ra_addr = 3;
         rb_addr = 3;
@@ -136,36 +148,41 @@ module DATAPATH_TB(
         // Read without write enable (should not change data)
         @(negedge clk);
         write_addr = 5;
-        imm_value = 8'h11;
+        imm_flag = 1;
+        imm_data = 8'h11;
         write_en = 0;
         ra_addr = 5;
         @(posedge clk); // No write should occur
+        @(negedge clk);
+        imm_flag = 0;
         @(posedge clk);
 
 //----------------------ALU REG FUNCTIONS----------------------------//
         //Writes 0 to reg1, 1 to reg2, then increments reg1 to 64
         @(negedge clk);
         alu_opcode = `ADD;
-        alu_en = 0;
+        write_alu = 0;
         ra_addr = 1;
         rb_addr = 2;
         
         //This should write 0 to reg1
         write_en = 1;
         write_addr = 1;
-        imm_value = 8'h00;
+        imm_data = 8'h00;
+        imm_flag = 1;
         @(posedge clk);
         
         //This should write 1 to reg2
         @(negedge clk);
         write_addr = 2;
-        imm_value = 8'h01;
+        imm_data = 8'h01;
         @(posedge clk);
         
         //enable ALU, writing results to reg1.
         @(negedge clk);
         write_addr = 1;
-        alu_en = 1;
+        imm_flag = 0;
+        write_alu = 1;
         alu_opcode = `ADD;
         //reg1 should end at 64
         //The very first loop should be 0+1, the second loop 1+1, then 2+1, etc etc
@@ -175,19 +192,21 @@ module DATAPATH_TB(
         
         //Test subtraction, should start at 127-10 --> -123
         @(negedge clk);
-        alu_en = 0;
+        write_alu = 0;
         write_addr = 12;
-        imm_value = 8'h7F;
+        imm_flag = 1;
+        imm_data = 8'h7F;
         @(posedge clk);
         @(negedge clk);
         write_addr = 6;
-        imm_value = 8'h0A;
+        imm_data = 8'h0A;
         @(posedge clk);
         @(negedge clk);
         ra_addr = 12;
         rb_addr = 6;
         alu_opcode = `SUB;
-        alu_en = 1;
+        imm_flag = 0;
+        write_alu = 1;
         write_addr = 12;
         for (i = 0; i < 25; i=i+1) begin
             @(posedge clk);
