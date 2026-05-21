@@ -58,7 +58,7 @@ module full_cpu(
         .data_ack(data_ack)
     );
     
-    instruction_decode IM (
+    control_unit control_unit (
         .instruction(iRAM_data_out),
         .alu_zero(alu_zero),
         .write_alu(write_alu),
