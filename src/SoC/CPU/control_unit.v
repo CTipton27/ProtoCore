@@ -79,13 +79,13 @@ module control_unit(
             4'hC: begin // Branch if equal
                 ra_addr = inst_ra;
                 rb_addr = inst_rb;
-                alu_opcode = 3'b1; //subtraction, zero flag determines equality
+                alu_opcode = 3'b001; //subtraction, zero flag determines equality
                 pc_select = alu_zero ? 2'b01 : 2'b00;
                 end
             4'hD: begin //Branch not equal
                 ra_addr = inst_ra;
                 rb_addr = inst_rb;
-                alu_opcode = 3'b1; //subtraction, zero flag determines equality
+                alu_opcode = 3'b001; //subtraction, zero flag determines equality
                 pc_select = alu_zero ? 2'b00 : 2'b01;
                 end
             4'hE: begin //Jump

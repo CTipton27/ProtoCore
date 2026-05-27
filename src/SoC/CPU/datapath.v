@@ -2,53 +2,53 @@
 //FILE: datapath.v
 module datapath(
     input clk,
-    input write_alu,
-    input [2:0] alu_opcode,
-    input [7:0] ram_data, imm_data,
-    input [3:0] write_addr, ra_addr, rb_addr,
-    input write_en,
-    input is_load,
-    input imm_flag,
-    input cpu_paused,
-    output [7:0] read_a, read_b,
-    output alu_zero, alu_carry,
-    output [7:0] alu_out
-    );
-    wire [7:0] ra_data, rb_data; //output data of regs.
-    reg [7:0] write_data;
-    wire [7:0] rb_data_mux;
-    wire [1:0] write_src = {write_alu, is_load};
     
-    ALU alu (
-        .a(ra_data),
-        .b(rb_data_mux),
+    input alu_src_immediate,
+    input alu_opcode,
+    
+    input [7:0] extern_write_data,
+    input [7:0] imm_data,
+    
+    input reg_write_enable,
+    input reg_write_external,
+    input [3:0] rd_addr,
+    input [3:0] ra_addr,
+    input [3:0] rb_addr,
+    output [7:0] reg_a_data,
+    output [7:0] reg_b_data,
+    
+    output [7:0] alu_out,
+    output alu_zero,
+    output alu_carry
+    );
+    
+    wire [7:0] read_a, read_b;
+    
+    wire [7:0] alu_data_b;
+    
+    alu alu(
+        .a(read_a),
+        .b(alu_data_b),
         .opcode(alu_opcode),
         .out(alu_out),
         .zero(alu_zero),
         .carry(alu_carry)
     );
     
-    reg_file regfile (
+    reg_file reg_file (
         .clk(clk),
-        .ra(ra_addr),
-        .rb(rb_addr),
-        .wa(write_addr),
-        .wd(write_data),
-        .we(write_en),
-        .cpu_paused(cpu_paused),
-        .read_a(ra_data),
-        .read_b(rb_data)
+        .write_enable(reg_write_enable),
+        .write_addr(rd_addr),
+        .write_data(reg_write_data),
+        .read_addr_a(ra_addr),
+        .read_addr_b(rb_addr),
+        .read_data_a(read_a),
+        .read_data_b(read_b)
     );
     
-    always @(*) begin
-        case (write_src)
-            2'b01: write_data = ram_data;//load
-            2'b10: write_data = alu_out; //alu
-            default: write_data = imm_data;
-        endcase
-    end
+    assign alu_data_b = alu_src_immediate ? imm_data : read_b;
+    assign reg_write_data = reg_write_external ? extern_write_data : alu_out;
+    assign reg_a_data = read_a;
+    assign reg_b_data = read_b;
     
-    assign read_a = (ra_addr == 0) ? 8'b0 : (write_en && ra_addr == write_addr) ? write_data : ra_data;
-    assign read_b = (rb_addr == 0) ? 8'b0 : (write_en && rb_addr == write_addr) ? write_data : rb_data;
-    assign rb_data_mux = (imm_flag == 1) ? imm_data : rb_data;
 endmodule
