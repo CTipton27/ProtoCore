@@ -25,7 +25,8 @@ module cpu_core(
     
     wire ram_write_enable, is_load;
     
-    wire [7:0] pc_load_addr;
+    reg [7:0] pc_load_addr;
+	wire [7:0] pc_branch_addr, pc_jump_addr;
     wire [1:0] pc_select;
     reg pc_load, pc_enable;
     
@@ -38,9 +39,9 @@ module cpu_core(
         .instruction(instruction),
         .alu_zero(alu_zero),
         .reg_write_enable(reg_write_enable),
-        .rd_addr(ra_addr),
-        .ra_addr(rb_addr),
-        .rb_addr(rd_addr),
+        .rd_addr(rd_addr),
+        .ra_addr(ra_addr),
+        .rb_addr(rb_addr),
         .alu_opcode(alu_opcode),
         .alu_src_immediate(alu_src_immediate),
         .ram_write_enable(ram_write_enable),
@@ -75,20 +76,34 @@ module cpu_core(
         .load_enable(pc_load),
         .load_data(pc_load_addr),
         .addr(pc_addr)
-    );
-    
-    branch_calc branch_calc();
-    jump_calc jump_calc();
+    );    
+    branch_calc branch_calc(
+		.pc_addr(pc_addr),
+		.imm(imm_value),
+		.branch_target(pc_branch_addr)
+	);
+    jump_calc jump_calc(
+	.reg_data(register_a_data),
+    .imm(imm_value),
+    .jump_target(pc_jump_addr)
+	);
     
     //Assign PC target if not +1
     always @ (*) begin
         pc_enable = 0;
         pc_load = 0;
+		pc_load_addr = 8'b0;
         case (pc_select)
-            2'b00: pc_enable = 1;
-            2'b01: ; // Branch target
-            2'b10: ; // Jump target
-            default: ;
+            2'b00: pc_enable = 1; // PC + 1
+            2'b01: begin // Branch target
+				pc_load = 1;
+				pc_load_addr = pc_branch_addr;
+				end 
+            2'b10: begin // Jump target
+				pc_load = 1;
+				pc_load_addr = pc_jump_addr;
+				end
+			default: pc_enable = 0;
         endcase
     end
     
