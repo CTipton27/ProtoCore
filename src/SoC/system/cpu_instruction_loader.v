@@ -14,7 +14,7 @@ module cpu_instruction_loader(
     input [7:0] PC_addr,
     input [7:0] uart_packet,
     output reg packet_ack = 0,
-    output reg cpu_paused = 0,
+    output reg cpu_resume = 0,
     output reg reset_PC = 0,
     output reg iRAM_write_enable = 0,
     output reg [7:0] extern_iRAM_addr = 0,
@@ -37,19 +37,21 @@ module cpu_instruction_loader(
         if (rst) begin
             state <= IDLE;
             packet_ack <= 0;
-            cpu_paused <= 0;
+            cpu_resume <= 0;
             reset_PC <= 0;
             iRAM_write_enable <= 0;
             extern_iRAM_addr <= 0;
             iRAM_data_in <= 0;
             packets_held <= 0;
+            allow_write <= 0;
+            full_word <= 24'b0;
         end else begin
             case (state)
                 IDLE: begin
                     iRAM_write_enable <= 0;
-                    if (packet_ready & !packet_ack)
+                    if (packet_ready && !packet_ack)
                         state <= RECEIVE;
-                    if (!packet_ready & packet_ack)
+                    if (!packet_ready && packet_ack)
                         packet_ack <= 0;
                         
                     if (packets_held == 3) begin
@@ -57,25 +59,33 @@ module cpu_instruction_loader(
                             if (full_word == 24'hFF0000 && HALT_flag) begin
                                 // Start flag: FF0000
                                 allow_write <= 1;
-                                cpu_paused <= 1;
-                            end else if (cpu_paused && full_word == 24'hFFFF00) begin
+                                cpu_resume <= 0;
+                            end else if (allow_write && full_word == 24'hFFFF00) begin
                                 // End flag 1: FFFF00, reset
                                 reset_PC <= 1;
                                 allow_write <= 0;
+                                packets_held <= 0;
+                                full_word <= 24'b0;
+                                extern_iRAM_addr <= 0;
                                 state <= END;
-                            end else if (cpu_paused && full_word == 24'hFFF000) begin
+                            end else if (allow_write && full_word == 24'hFFF000) begin
                                 // End flag 2: FFF000, do not reset
                                 allow_write <= 0;
+                                packets_held <= 0;
+                                full_word <= 24'b0;
+                                extern_iRAM_addr <= 0;
                                 state <= END;
-                            end else if (allow_write == 1) begin
+                            end else if (allow_write) begin
                                 iRAM_data_in <= full_word;
                                 state <= SEND;
                             end
+                        end else begin
+                            cpu_resume <= 0;
                         end
-                end
+                end 
 
                 RECEIVE: begin
-                    if (packet_ready & !packet_ack) begin
+                    if (packet_ready && !packet_ack) begin
                         full_word <= {uart_packet, full_word[23:8]};
                         packets_held <= packets_held + 1;
                         packet_ack <= 1;
@@ -96,18 +106,14 @@ module cpu_instruction_loader(
                 END: begin
                     if (reset_PC) begin
                         if (!wait_for_PC_reset) begin
-                            cpu_paused <= 0;
+                            cpu_resume <= 1;
                             reset_PC <= 0;
+                            state <= IDLE;
                         end
                     end else begin
-                        cpu_paused <= 0;
-                    end
-
-                    if (!cpu_paused)
+                        cpu_resume <= 1;
                         state <= IDLE;
-                        
-                    extern_iRAM_addr <= 0;
-                    full_word <= 24'b0;
+                    end
                 end
 
                 default: state <= IDLE;

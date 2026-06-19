@@ -5,6 +5,7 @@ module cpu_core(
     input clk,
     input rst,
     input cpu_resume,
+    input reset_pc,
 
     input  [23:0] instruction,
 
@@ -63,10 +64,10 @@ module cpu_core(
         .clk(clk),
         .alu_src_immediate(alu_src_immediate),
         .alu_opcode(alu_opcode),
-        .extern_write_data(data_in),
+        .extern_data(data_in),
         .imm_data(imm_value),
         .reg_write_enable(reg_write_enable),
-        .reg_write_external(is_load),
+        .wb_select(is_load),
         .rd_addr(rd_addr),
         .ra_addr(ra_addr),
         .rb_addr(rb_addr),
@@ -104,7 +105,10 @@ module cpu_core(
         pc_load = 1'b0;
         pc_load_addr = 8'b0;
 
-        if (!halt_state_reg) begin
+        if (reset_pc) begin
+            pc_load = 1'b1;
+            pc_load_addr = 8'b0;
+        end else if (!halt_state_reg) begin
             case (pc_select)
                 2'b00: begin
                     pc_enable = 1'b1;
@@ -132,9 +136,8 @@ module cpu_core(
         else if (halt_detect)
             halt_state_reg <= 1'b1;
     end
-
-    assign data_write_enable = data_write_enable;
+    
     assign data_out = halt_state_reg ? imm_value : register_b_data;
     assign halt_state = halt_state_reg;
-    assign instruction_gated = halt_state_reg ? instruction : instruction;
+    assign instruction_gated = halt_state_reg ? {16'hF000, imm_value} : instruction;
 endmodule
