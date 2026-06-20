@@ -18,8 +18,8 @@ module soc(
     output [7:0] pc_addr_out,
     output cpu_halt,
     
-    output iram_packet_receive
-    
+    output iram_packet_receive,
+    output [15:0] mmio_data
     );
     
     wire [23:0] instruction;
@@ -27,6 +27,9 @@ module soc(
     wire [7:0] ram_data_addr;
     wire ram_write_enable, iram_we;
     wire [7:0] pc_addr, iram_addr;
+    wire [15:0] ram_mmio_data;
+    reg [15:0] mmio_data_reg;
+    reg [7:0] mmio_high_byte;
     
     cpu_core cpu_core(
         .clk(clk_cpu),
@@ -58,9 +61,24 @@ module soc(
         .addr(ram_data_addr),
         .write_data(cpu_data_out),
         .write_en(ram_write_enable && !cpu_halt),
-        .read_data(cpu_data_in)
+        .read_data(cpu_data_in),
+        .mmio_data(ram_mmio_data)
     );
+    
+    always @(posedge clk_cpu or posedge rst) begin
+        if (rst) begin
+            mmio_data_reg <= 16'b0;
+            mmio_high_byte <= 8'b0;
+        end else begin
+            if (ram_mmio_data[15:8] != mmio_high_byte) begin 
+                mmio_data_reg <= ram_mmio_data;
+                mmio_high_byte <= ram_mmio_data[15:8];
+            end
+        end
+    end
+    
     assign iram_addr = cpu_halt ? iram_write_addr : pc_addr;
     assign iram_we = cpu_halt && iram_write_enable;
     assign pc_addr_out = pc_addr;
+    assign mmio_data = mmio_data_reg;
 endmodule

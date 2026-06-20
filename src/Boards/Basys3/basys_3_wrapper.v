@@ -17,6 +17,7 @@ module basys_3_wrapper(
     wire cpu_resume;
     wire iram_write_enable;
     wire [23:0] iram_write_data;
+    wire [16:0] mmio_display;
     wire [7:0] iram_write_addr;
     
     wire [7:0] ra_data, rb_data;
@@ -29,6 +30,8 @@ module basys_3_wrapper(
     wire [7:0] pc_addr;
     wire [7:0] uart_packet;
     wire packet_ack;
+    
+    wire debug_display_reg;
     
     soc soc(
         .clk_cpu(clk_cpu),
@@ -45,7 +48,8 @@ module basys_3_wrapper(
         .cpu_data_out(cpu_data_out),
         .pc_addr_out(pc_addr),
         .cpu_halt(cpu_halt),
-        .iram_packet_receive(iram_packet_receive)
+        .iram_packet_receive(iram_packet_receive),
+        .mmio_data(mmio_display)
     );
     
     clk_visualizer clk_visualizer(
@@ -67,7 +71,8 @@ module basys_3_wrapper(
         .reset_PC(reset_pc),
         .iRAM_write_enable(iram_write_enable),
         .extern_iRAM_addr(iram_write_addr),
-        .iRAM_data_in(iram_write_data)
+        .iRAM_data_in(iram_write_data),
+        .debug_display_reg(debug_display_reg)
     );
     
     sev_seg sev_seg(    
@@ -85,8 +90,9 @@ module basys_3_wrapper(
         .packet_ready(packet_ready),
         .uart_packet(uart_packet)
     );
-    
-    assign led = cpu_halt ? {8'b0, cpu_data_out} : {ra_data, rb_data};
+     
+    assign led = cpu_halt ? {8'b0, cpu_data_out} :
+                    debug_display_reg ? {ra_data, rb_data} : mmio_display;
     assign clk_cpu = clk_visual ? s_clk : clk_system;
     
 endmodule

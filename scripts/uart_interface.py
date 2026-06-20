@@ -21,6 +21,7 @@ if ser.is_open:
     confirm_load = input("Load program.mem contents? y/n: ")
     if confirm_load.lower().strip() == "y":
         reset_pc = input("Reset program counter after write? y/n: ")
+        display = input ("Display mode (reg / mmio): ")
         ser.write(bytes([0x00, 0x00, 0xFF]))
         for line in mem_file:
             line.strip()
@@ -30,6 +31,14 @@ if ser.is_open:
             b2 = (instr_val >> 16) & 0xFF
 
             ser.write(bytes([b0, b1, b2]))
+
+        #send display_mode parameter
+        if display.lower().strip() == "reg":
+            ser.write(bytes([0x00, 0xE0, 0xFF]))
+        elif display.lower().strip() == "mmio":
+            ser.write(bytes([0x00, 0xD0, 0xFF]))
+
+        #Send reset_pc parameter
         if reset_pc.lower().strip() == "y":
             ser.write(bytes([0x00, 0xFF, 0xFF]))
         else:
