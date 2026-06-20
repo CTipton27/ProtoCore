@@ -29,7 +29,7 @@ module soc(
     wire [7:0] pc_addr, iram_addr;
     wire [15:0] ram_mmio_data;
     reg [15:0] mmio_data_reg;
-    reg [7:0] mmio_high_byte;
+    reg mmio_pending;
     
     cpu_core cpu_core(
         .clk(clk_cpu),
@@ -67,12 +67,15 @@ module soc(
     
     always @(posedge clk_cpu or posedge rst) begin
         if (rst) begin
+            mmio_pending <= 0;
             mmio_data_reg <= 16'b0;
-            mmio_high_byte <= 8'b0;
         end else begin
-            if (ram_mmio_data[15:8] != mmio_high_byte) begin 
-                mmio_data_reg <= ram_mmio_data;
-                mmio_high_byte <= ram_mmio_data[15:8];
+            if (ram_mmio_data != mmio_data_reg) begin 
+                if (mmio_pending) begin
+                    mmio_pending <= 0;
+                    mmio_data_reg <= ram_mmio_data;
+                end else
+                    mmio_pending <= 1;
             end
         end
     end
