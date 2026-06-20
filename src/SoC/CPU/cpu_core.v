@@ -24,9 +24,9 @@ module cpu_core(
 
     reg halt_state_reg;
     wire halt_detect;
+    reg [7:0] halt_imm;
     reg pc_enable;
 
-    wire [23:0] instruction_gated;
     wire reg_write_enable;
     wire [3:0] ra_addr, rb_addr, rd_addr;
 
@@ -45,7 +45,7 @@ module cpu_core(
     wire [7:0] pc_jump_addr;
 
     control_unit control_unit(
-        .instruction(instruction_gated),
+        .instruction(instruction),
         .alu_zero(alu_zero),
         .reg_write_enable(reg_write_enable),
         .rd_addr(rd_addr),
@@ -131,13 +131,17 @@ module cpu_core(
     always @(posedge clk) begin
         if (rst)
             halt_state_reg <= 1'b0;
-        else if (cpu_resume)
-            halt_state_reg <= 1'b0;
-        else if (halt_detect)
-            halt_state_reg <= 1'b1;
+        else begin
+            if (cpu_resume)
+                halt_state_reg <= 1'b0;
+            else if (halt_detect)
+                halt_state_reg <= 1'b1;
+            
+            if (halt_detect && !halt_state_reg)
+                halt_imm <= imm_value;
+        end
     end
     
-    assign data_out = halt_state_reg ? imm_value : register_b_data;
+    assign data_out = halt_state_reg ? halt_imm : register_b_data;
     assign halt_state = halt_state_reg;
-    assign instruction_gated = halt_state_reg ? {16'hF000, imm_value} : instruction;
 endmodule

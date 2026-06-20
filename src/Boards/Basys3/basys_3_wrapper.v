@@ -9,11 +9,11 @@ module basys_3_wrapper(
     input UART_rx,
     
     output [15:0] led,
-    output [7:0] seg,
+    output [6:0] seg,
     output [3:0] an
     );
     
-    wire clk_cpu;
+    wire clk_cpu, s_clk;
     wire cpu_resume;
     wire iram_write_enable;
     wire [23:0] iram_write_data;
@@ -23,6 +23,7 @@ module basys_3_wrapper(
     wire [7:0] cpu_data_out;
     wire cpu_halt;
     wire iram_packet_receive;
+    wire reset_pc;
     
     wire packet_ready;
     wire [7:0] pc_addr;
@@ -50,7 +51,7 @@ module basys_3_wrapper(
     clk_visualizer clk_visualizer(
         .clk(clk_system),
         .clk_speed(clk_speed),
-        .s_clk(clk_cpu) 
+        .s_clk(s_clk) 
     );
     
     cpu_instruction_loader cpu_instruction_loader(
@@ -84,5 +85,8 @@ module basys_3_wrapper(
         .packet_ready(packet_ready),
         .uart_packet(uart_packet)
     );
+    
+    assign led = cpu_halt ? {8'b0, cpu_data_out} : {ra_data, rb_data};
+    assign clk_cpu = clk_visual ? s_clk : clk_system;
     
 endmodule

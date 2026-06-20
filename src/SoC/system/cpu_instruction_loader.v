@@ -29,7 +29,6 @@ module cpu_instruction_loader(
     reg [1:0] state = IDLE;
     reg [1:0] packets_held = 0;
     reg [23:0] full_word = 24'b0;
-    wire wait_for_PC_reset;
     reg allow_write = 0;
 
     always @ (posedge clk) begin
@@ -104,22 +103,17 @@ module cpu_instruction_loader(
                 end
 
                 END: begin
-                    if (reset_PC) begin
-                        if (!wait_for_PC_reset) begin
-                            cpu_resume <= 1;
-                            reset_PC <= 0;
-                            state <= IDLE;
-                        end
-                    end else begin
-                        cpu_resume <= 1;
+                    cpu_resume <= 1;
+                
+                    if (!HALT_flag) begin
+                        cpu_resume <= 0;
+                        reset_PC <= 0;
                         state <= IDLE;
                     end
                 end
-
+                
                 default: state <= IDLE;
             endcase
         end
     end
-    
-    assign wait_for_PC_reset = (PC_addr == 8'b0) ? 0 : 1; //wire only high if PC_addr is 8'b0
 endmodule

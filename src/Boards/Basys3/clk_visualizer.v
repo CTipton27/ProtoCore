@@ -18,14 +18,14 @@ module clk_visualizer(
     always @(posedge clk) begin
         if (clk_spd_prev != clk_speed) begin
             case (clk_speed)
-                3'b000: target <= SYS_CLK_SPEED /1;   //1Hz
-                3'b001: target <= SYS_CLK_SPEED /2;   //2Hz
-                3'b010: target <= SYS_CLK_SPEED /4;   //4Hz
-                3'b011: target <= SYS_CLK_SPEED /8;   //8Hz
-                3'b100: target <= SYS_CLK_SPEED /16;  //16Hz
-                3'b101: target <= SYS_CLK_SPEED /32;  //32Hz
-                3'b110: target <= SYS_CLK_SPEED /64;  //64Hz
-                3'b111: target <= SYS_CLK_SPEED /128; //128Hz
+                3'b000: target <= SYS_CLK_SPEED /1;   //.5Hz
+                3'b001: target <= SYS_CLK_SPEED /2;   //1Hz
+                3'b010: target <= SYS_CLK_SPEED /4;   //2Hz
+                3'b011: target <= SYS_CLK_SPEED /8;   //4Hz
+                3'b100: target <= SYS_CLK_SPEED /16;  //8Hz
+                3'b101: target <= SYS_CLK_SPEED /32;  //16Hz
+                3'b110: target <= SYS_CLK_SPEED /64;  //32Hz
+                3'b111: target <= SYS_CLK_SPEED /128; //64Hz
                 default: s_clk <= clk;
             endcase
             counter <= 0;
