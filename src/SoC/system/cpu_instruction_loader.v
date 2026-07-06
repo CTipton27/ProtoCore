@@ -45,7 +45,6 @@ module cpu_instruction_loader(
             packets_held <= 0;
             allow_write <= 0;
             full_word <= 24'b0;
-            debug_display_reg <= 0;
         end else begin
             case (state)
                 IDLE: begin

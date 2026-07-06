@@ -29,8 +29,8 @@ module alu(
             3'd3: out = a | b;              //or
             3'd4: out = a ^ b;              //xor
             3'd5: out = ~a;                 //not(a)
-            3'd6: {carry, out} = a<<1;      //shl(a)
-            3'd7: {out, carry} = a>>1;      //shr(a)
+            3'd6: {carry, out} = {a, 1'b0}; //shl(a)
+            3'd7: {out, carry} = {1'b0, a}; //shr(a)
             default: out = 8'b0;
         endcase
         zero = (out == 8'b0);
