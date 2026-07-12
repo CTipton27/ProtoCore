@@ -7,6 +7,7 @@ module basys_3_wrapper(
     input clk_visual,
     input [2:0] clk_speed,
     input UART_rx,
+    input program_mode,
     
     output [15:0] led,
     output [6:0] seg,
@@ -14,7 +15,7 @@ module basys_3_wrapper(
     );
     
     wire clk_cpu, s_clk;
-    wire cpu_resume;
+    wire cpu_enable;
     wire iram_write_enable;
     wire [23:0] iram_write_data;
     wire [16:0] mmio_display;
@@ -37,7 +38,7 @@ module basys_3_wrapper(
         .clk_cpu(clk_cpu),
         .clk_sys(clk_system),
         .rst(rst),
-        .cpu_resume(cpu_resume),
+        .cpu_enable(cpu_enable),
         .reset_pc(reset_pc),
         .iram_write_enable(iram_write_enable),
         .iram_write_data(iram_write_data),
@@ -64,10 +65,11 @@ module basys_3_wrapper(
         .HALT_flag(cpu_halt),
         .packet_ready(packet_ready),
         .data_ack(iram_packet_receive),
+        .program_mode(program_mode),
         .PC_addr(pc_addr),
         .uart_packet(uart_packet),
         .packet_ack(packet_ack),
-        .cpu_resume(cpu_resume),
+        .cpu_enable(cpu_enable),
         .reset_PC(reset_pc),
         .iRAM_write_enable(iram_write_enable),
         .extern_iRAM_addr(iram_write_addr),

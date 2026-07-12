@@ -5,7 +5,7 @@ module soc(
     input clk_cpu,
     input clk_sys,
     input rst,
-    input cpu_resume,
+    input cpu_enable,
     input reset_pc,
     input iram_write_enable,
     input [23:0] iram_write_data,
@@ -34,7 +34,7 @@ module soc(
     cpu_core cpu_core(
         .clk(clk_cpu),
         .rst(rst),
-        .cpu_resume(cpu_resume),
+        .cpu_enable(cpu_enable),
         .reset_pc(reset_pc),
         .instruction(instruction),
         .data_in(cpu_data_in),

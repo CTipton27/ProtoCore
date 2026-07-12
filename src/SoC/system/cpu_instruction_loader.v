@@ -13,8 +13,9 @@ module cpu_instruction_loader(
     input data_ack,
     input [7:0] PC_addr,
     input [7:0] uart_packet,
+    input program_mode,
     output reg packet_ack = 0,
-    output reg cpu_resume = 0,
+    output reg cpu_enable = 0,
     output reg reset_PC = 0,
     output reg iRAM_write_enable = 0,
     output reg [7:0] extern_iRAM_addr = 0,
@@ -37,7 +38,7 @@ module cpu_instruction_loader(
         if (rst) begin
             state <= IDLE;
             packet_ack <= 0;
-            cpu_resume <= 0;
+            cpu_enable <= 0;
             reset_PC <= 0;
             iRAM_write_enable <= 0;
             extern_iRAM_addr <= 0;
@@ -48,7 +49,7 @@ module cpu_instruction_loader(
         end else begin
             case (state)
                 IDLE: begin
-                    cpu_resume <= 0;
+                    cpu_enable <= 1;
                     iRAM_write_enable <= 0;
                     if (packet_ready && !packet_ack)
                         state <= RECEIVE;
@@ -56,43 +57,43 @@ module cpu_instruction_loader(
                         packet_ack <= 0;
                         
                     if (packets_held == 3) begin
-                            packets_held <= 0;
-                            if (full_word == 24'hFF0000 && HALT_flag) begin
-                                // Start flag: FF0000
-                                allow_write <= 1;
-                                cpu_resume <= 0;
-                            end else if (allow_write) begin
-                                case (full_word)
-                                    24'hFFD000: begin //Display Param: MMIO
-                                        debug_display_reg <= 0;
-                                    end
-                                    24'hFFE000: begin //Display Param: REG
-                                        debug_display_reg <= 1;
-                                    end
-                                    24'hFFFF00: begin //End flag 1: Reset PC
-                                        reset_PC <= 1;
-                                        allow_write <= 0;
-                                        packets_held <= 0;
-                                        full_word <= 24'b0;
-                                        extern_iRAM_addr <= 0;
-                                        state <= END;
-                                    end
-                                    24'hFFF000: begin //End flag 2: Keep PC
-                                        allow_write <= 0;
-                                        packets_held <= 0;
-                                        full_word <= 24'b0;
-                                        extern_iRAM_addr <= 0;
-                                        state <= END;
-                                    end
-                                    default: begin // Normal instruction
-                                        iRAM_data_in <= full_word;
-                                        state <= SEND;
-                                    end
-                                endcase
-                            end
-                        end else begin
-                            cpu_resume <= 0;
+                        packets_held <= 0;
+                        if (full_word == 24'hFF0000 && HALT_flag) begin
+                            // Start flag: FF0000
+                            allow_write <= 1;
+                            cpu_enable <= 0;
+                        end else if (allow_write) begin
+                            case (full_word)
+                                24'hFFD000: begin //Display Param: MMIO
+                                    debug_display_reg <= 0;
+                                end
+                                24'hFFE000: begin //Display Param: REG
+                                    debug_display_reg <= 1;
+                                end
+                                24'hFFFF00: begin //End flag 1: Reset PC
+                                    reset_PC <= 1;
+                                    allow_write <= 0;
+                                    packets_held <= 0;
+                                    full_word <= 24'b0;
+                                    extern_iRAM_addr <= 0;
+                                    state <= END;
+                                end
+                                24'hFFF000: begin //End flag 2: Keep PC
+                                    allow_write <= 0;
+                                    packets_held <= 0;
+                                    full_word <= 24'b0;
+                                    extern_iRAM_addr <= 0;
+                                    state <= END;
+                                end
+                                default: begin // Normal instruction
+                                    iRAM_data_in <= full_word;
+                                    state <= SEND;
+                                end
+                            endcase
                         end
+                    end else begin
+                        cpu_enable <= 1;
+                    end
                 end 
 
                 RECEIVE: begin
@@ -115,10 +116,10 @@ module cpu_instruction_loader(
                 end
 
                 END: begin
-                    cpu_resume <= 1;
+                    cpu_enable <= 1;
                 
                     if (!HALT_flag) begin
-                        cpu_resume <= 0;
+                        cpu_enable <= 0;
                         reset_PC <= 0;
                         state <= IDLE;
                     end

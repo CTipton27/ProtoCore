@@ -4,7 +4,7 @@
 module cpu_core(
     input clk,
     input rst,
-    input cpu_resume,
+    input cpu_enable,
     input reset_pc,
 
     input  [23:0] instruction,
@@ -132,10 +132,10 @@ module cpu_core(
         if (rst)
             halt_state_reg <= 1'b0;
         else begin
-            if (cpu_resume)
-                halt_state_reg <= 1'b0;
-            else if (halt_detect)
+            if (halt_detect || !cpu_enable)
                 halt_state_reg <= 1'b1;
+            else
+                halt_state_reg <= 1'b0;
             
             if (halt_detect && !halt_state_reg)
                 halt_imm <= imm_value;
