@@ -2,6 +2,7 @@
 //FILE: reg_file.v
 module reg_file(
     input clk,
+    input cpu_enable,
     
     input write_enable,
     input [3:0] write_addr,
@@ -19,9 +20,11 @@ module reg_file(
     assign read_data_b = (read_addr_b == 0) ? 8'b0 : regfile[read_addr_b];
     
     always @(posedge clk) begin
-    if (write_addr == 0)
-        regfile[0] <= 8'b0;
-    else if (write_enable)
-        regfile[write_addr] <= write_data;
+    if (cpu_enable) begin
+        if (write_addr == 0)
+            regfile[0] <= 8'b0;
+        else if (write_enable)
+            regfile[write_addr] <= write_data;
+        end
     end
 endmodule

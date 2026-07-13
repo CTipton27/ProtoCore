@@ -23,8 +23,8 @@ module uart_rx(
     parameter START_DELAY = TICKS_PER_BIT / 2;
 
     // FSM States
-    parameter [1:0] IDLE = 2'b00,
-                    START = 2'b01,
+    parameter [1:0] IDLE    = 2'b00,
+                    START   = 2'b01,
                     RECEIVE = 2'b10;
 
     reg [1:0] state = IDLE;
@@ -32,14 +32,26 @@ module uart_rx(
     reg [3:0] bit_count = 0;
     reg [7:0] shift_reg = 0;
 
+    // Synchronizer and Edge Detection registers
+    reg [2:0] rx_sync = 3'b111; 
+    
+    always @(posedge clk) begin
+        rx_sync <= {rx_sync[1:0], rx};
+    end
+
+    // rx_sync[1] is the stable, synchronized RX signal
+    // rx_sync[2] is the previous cycle's value. 
+    // A falling edge happened if old was 1 and new is 0.
+    wire rx_falling_edge = (rx_sync[2] == 1 && rx_sync[1] == 0);
+
     always @(posedge clk) begin
         if (rst) begin
-            state         <= IDLE;
-            tick_counter  <= 0;
-            bit_count     <= 0;
-            shift_reg     <= 0;
-            uart_packet   <= 0;
-            packet_ready  <= 0;
+            state        <= IDLE;
+            tick_counter <= 0;
+            bit_count    <= 0;
+            shift_reg    <= 0;
+            uart_packet  <= 0;
+            packet_ready <= 0;
         end else begin
             // Clear packet_ready only on ack
             if (packet_ready && packet_ack)
@@ -47,12 +59,13 @@ module uart_rx(
 
             case (state)
                 IDLE: begin
-                    if (rx == 0) begin
+                    // ONLY trigger on the actual transition edge, and ONLY if we are ready for data
+                    if (rx_falling_edge) begin
                         if (!packet_ready) begin
                             tick_counter <= 0;
                             state <= START;
                         end else begin
-                            //Will eventually add some error logic here for if a packet was not recieved by the downstream loader.
+                            // Data overrun error handling
                         end
                     end
                 end
@@ -73,11 +86,12 @@ module uart_rx(
                         tick_counter <= 0;
 
                         if (bit_count < 8) begin
-                            shift_reg <= {rx, shift_reg[7:1]};
+                            // Use the synchronized rx signal
+                            shift_reg <= {rx_sync[1], shift_reg[7:1]};
                             bit_count <= bit_count + 1;
                         end else begin
-                            // Stop bit received
-                            if (rx == 1) begin
+                            // Stop bit check using synchronized rx signal
+                            if (rx_sync[1] == 1) begin
                                 uart_packet <= shift_reg;
                                 packet_ready <= 1;
                             end

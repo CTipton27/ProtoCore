@@ -11,8 +11,11 @@ module instruction_ram(
     );
     reg [23:0] mem [255:0]; //256x24 rom
     
+    integer i;
+    
     initial begin
-        mem[0] = 24'hF000AA; //Custom HALT showing ready for UART
+        for (i = 0; i < 256; i = i+1)
+            mem[i] = 24'hF000AA; //Custom HALT showing ready for UART
     end
     
     always @ (posedge clk) begin

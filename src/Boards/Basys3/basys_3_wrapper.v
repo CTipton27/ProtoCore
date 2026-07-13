@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-//FILE: soc.v
+//FILE: basys_3_wrapper.v
 
 module basys_3_wrapper(
     input clk_system,
@@ -18,14 +18,14 @@ module basys_3_wrapper(
     wire cpu_enable;
     wire iram_write_enable;
     wire [23:0] iram_write_data;
-    wire [16:0] mmio_display;
+    wire [15:0] mmio_display;
     wire [7:0] iram_write_addr;
     
     wire [7:0] ra_data, rb_data;
     wire [7:0] cpu_data_out;
-    wire cpu_halt;
+    wire cpu_halted;
     wire iram_packet_receive;
-    wire reset_pc;
+    wire reset_pc, clear_halt;
     
     wire packet_ready;
     wire [7:0] pc_addr;
@@ -34,12 +34,15 @@ module basys_3_wrapper(
     
     wire debug_display_reg;
     
+    reg [15:0] output_reg;
+    
     soc soc(
         .clk_cpu(clk_cpu),
         .clk_sys(clk_system),
         .rst(rst),
         .cpu_enable(cpu_enable),
         .reset_pc(reset_pc),
+        .clear_halt(clear_halt),
         .iram_write_enable(iram_write_enable),
         .iram_write_data(iram_write_data),
         .iram_write_addr(iram_write_addr),
@@ -48,7 +51,7 @@ module basys_3_wrapper(
         .cpu_rb_data(rb_data),
         .cpu_data_out(cpu_data_out),
         .pc_addr_out(pc_addr),
-        .cpu_halt(cpu_halt),
+        .cpu_halted(cpu_halted),
         .iram_packet_receive(iram_packet_receive),
         .mmio_data(mmio_display)
     );
@@ -62,7 +65,6 @@ module basys_3_wrapper(
     cpu_instruction_loader cpu_instruction_loader(
         .clk(clk_system),
         .rst(rst),
-        .HALT_flag(cpu_halt),
         .packet_ready(packet_ready),
         .data_ack(iram_packet_receive),
         .program_mode(program_mode),
@@ -71,6 +73,7 @@ module basys_3_wrapper(
         .packet_ack(packet_ack),
         .cpu_enable(cpu_enable),
         .reset_PC(reset_pc),
+        .clear_halt(clear_halt),
         .iRAM_write_enable(iram_write_enable),
         .extern_iRAM_addr(iram_write_addr),
         .iRAM_data_in(iram_write_data),
@@ -93,8 +96,19 @@ module basys_3_wrapper(
         .uart_packet(uart_packet)
     );
      
-    assign led = cpu_halt ? {8'b0, cpu_data_out} :
-                    debug_display_reg ? {ra_data, rb_data} : mmio_display;
+    //display combinatorial block
+    always @ (*) begin
+        if (program_mode)
+            output_reg = 16'h1;
+        else if (cpu_halted)
+            output_reg = {8'b0, cpu_data_out};
+        else if (debug_display_reg)
+            output_reg = {ra_data, rb_data};
+        else
+            output_reg = mmio_display;
+    end
+    
+    assign led = output_reg;
     assign clk_cpu = clk_visual ? s_clk : clk_system;
     
 endmodule

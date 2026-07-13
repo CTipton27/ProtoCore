@@ -6,6 +6,7 @@ module cpu_core(
     input rst,
     input cpu_enable,
     input reset_pc,
+    input clear_halt,
 
     input  [23:0] instruction,
 
@@ -27,7 +28,7 @@ module cpu_core(
     reg [7:0] halt_imm;
     reg pc_enable;
 
-    wire reg_write_enable;
+    wire reg_write_enable, control_data_write_enable;
     wire [3:0] ra_addr, rb_addr, rd_addr;
 
     wire alu_src_immediate, alu_zero, alu_carry;
@@ -53,7 +54,7 @@ module cpu_core(
         .rb_addr(rb_addr),
         .alu_opcode(alu_opcode),
         .alu_src_immediate(alu_src_immediate),
-        .data_write_enable(data_write_enable),
+        .data_write_enable(control_data_write_enable),
         .is_load(is_load),
         .pc_select(pc_select),
         .halt_detect(halt_detect),
@@ -62,11 +63,12 @@ module cpu_core(
 
     datapath datapath(
         .clk(clk),
+        .cpu_enable(cpu_enable),
         .alu_src_immediate(alu_src_immediate),
         .alu_opcode(alu_opcode),
         .extern_data(data_in),
         .imm_data(imm_value),
-        .reg_write_enable(reg_write_enable),
+        .reg_write_enable(reg_write_enable && cpu_enable && !halt_state_reg),
         .wb_select(is_load),
         .rd_addr(rd_addr),
         .ra_addr(ra_addr),
@@ -108,7 +110,7 @@ module cpu_core(
         if (reset_pc) begin
             pc_load = 1'b1;
             pc_load_addr = 8'b0;
-        end else if (!halt_state_reg) begin
+        end else if (cpu_enable && !halt_state_reg) begin
             case (pc_select)
                 2'b00: begin
                     pc_enable = 1'b1;
@@ -129,19 +131,20 @@ module cpu_core(
 
     // HALT control
     always @(posedge clk) begin
-        if (rst)
+        if (rst) begin
             halt_state_reg <= 1'b0;
-        else begin
-            if (halt_detect || !cpu_enable)
-                halt_state_reg <= 1'b1;
-            else
+            halt_imm <= 8'b0;
+        end else begin
+            if (clear_halt)
                 halt_state_reg <= 1'b0;
-            
-            if (halt_detect && !halt_state_reg)
+            else if (!halt_state_reg && halt_detect) begin
+                halt_state_reg <= 1'b1;
                 halt_imm <= imm_value;
+            end
         end
     end
-    
+        
     assign data_out = halt_state_reg ? halt_imm : register_b_data;
     assign halt_state = halt_state_reg;
+    assign data_write_enable = control_data_write_enable && cpu_enable && !halt_state_reg;
 endmodule

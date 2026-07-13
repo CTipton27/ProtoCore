@@ -7,6 +7,7 @@ module soc(
     input rst,
     input cpu_enable,
     input reset_pc,
+    input clear_halt,
     input iram_write_enable,
     input [23:0] iram_write_data,
     input [7:0] iram_write_addr,
@@ -16,7 +17,7 @@ module soc(
     output [7:0] cpu_rb_data,
     output [7:0] cpu_data_out,
     output [7:0] pc_addr_out,
-    output cpu_halt,
+    output cpu_halted,
     
     output iram_packet_receive,
     output [15:0] mmio_data
@@ -36,6 +37,7 @@ module soc(
         .rst(rst),
         .cpu_enable(cpu_enable),
         .reset_pc(reset_pc),
+        .clear_halt(clear_halt),
         .instruction(instruction),
         .data_in(cpu_data_in),
         .data_out(cpu_data_out),
@@ -44,7 +46,7 @@ module soc(
         .data_addr(ram_data_addr),
         .data_write_enable(ram_write_enable),
         .pc_addr(pc_addr),
-        .halt_state(cpu_halt)
+        .halt_state(cpu_halted)
     );
     
     instruction_ram instruction_ram(
@@ -60,7 +62,7 @@ module soc(
         .clk(clk_cpu),
         .addr(ram_data_addr),
         .write_data(cpu_data_out),
-        .write_en(ram_write_enable && !cpu_halt),
+        .write_en(ram_write_enable),
         .read_data(cpu_data_in),
         .mmio_data(ram_mmio_data)
     );
@@ -70,7 +72,7 @@ module soc(
             mmio_pending <= 0;
             mmio_data_reg <= 16'b0;
         end else begin
-            if (ram_mmio_data != mmio_data_reg) begin 
+            if (cpu_enable && ram_mmio_data != mmio_data_reg) begin 
                 if (mmio_pending) begin
                     mmio_pending <= 0;
                     mmio_data_reg <= ram_mmio_data;
@@ -80,8 +82,8 @@ module soc(
         end
     end
     
-    assign iram_addr = cpu_halt ? iram_write_addr : pc_addr;
-    assign iram_we = cpu_halt && iram_write_enable;
+    assign iram_addr = iram_we ? iram_write_addr : pc_addr;
+    assign iram_we = iram_write_enable;
     assign pc_addr_out = pc_addr;
     assign mmio_data = mmio_data_reg;
 endmodule

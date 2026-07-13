@@ -3,6 +3,7 @@
 
 module datapath(
     input clk,
+    input cpu_enable,
 
     input alu_src_immediate,
     input [2:0] alu_opcode,
@@ -40,6 +41,7 @@ module datapath(
 
     reg_file reg_file(
         .clk(clk),
+        .cpu_enable(cpu_enable),
         .write_enable(reg_write_enable),
         .write_addr(rd_addr),
         .write_data(wb_data),

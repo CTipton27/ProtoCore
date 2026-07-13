@@ -1,12 +1,10 @@
 import serial.tools.list_ports
 from pathlib import Path
-import re
+import time
 
 root = Path(__file__).resolve().parent.parent
 src_dir = root / "src"
 mem_src = src_dir / "program.mem"
-
-mem_file = open(mem_src, 'r')
 
 ports = serial.tools.list_ports.comports()
 for port in ports:
@@ -23,26 +21,39 @@ if ser.is_open:
         reset_pc = input("Reset program counter after write? y/n: ")
         display = input ("Display mode (reg / mmio): ")
         ser.write(bytes([0x00, 0x00, 0xFF]))
-        for line in mem_file:
-            line.strip()
-            instr_val = int(line, 2)
-            b0 = instr_val & 0xFF
-            b1 = (instr_val >> 8) & 0xFF
-            b2 = (instr_val >> 16) & 0xFF
+        time.sleep(0.005)
+        print("0xFF0000 - Begin write")
+        with open(mem_src, "r") as mem_file:
+            for line in mem_file:
+                line = line.strip()
+                if not line:
+                    continue
+                instr_val = int(line, 2)
+                b0 = instr_val & 0xFF
+                b1 = (instr_val >> 8) & 0xFF
+                b2 = (instr_val >> 16) & 0xFF
 
-            ser.write(bytes([b0, b1, b2]))
+                ser.write(bytes([b0, b1, b2]))
+                print(f"{b2:02X} {b1:02X} {b0:02X}")
+                time.sleep(0.005)
 
         #send display_mode parameter
         if display.lower().strip() == "reg":
             ser.write(bytes([0x00, 0xE0, 0xFF]))
+            time.sleep(0.005)
+            print("0xFFE000 - Register display mode")
         elif display.lower().strip() == "mmio":
             ser.write(bytes([0x00, 0xD0, 0xFF]))
+            time.sleep(0.005)
+            print("0xFFD000 - MMIO display mode")
 
         #Send reset_pc parameter
         if reset_pc.lower().strip() == "y":
             ser.write(bytes([0x00, 0xFF, 0xFF]))
+            print("0xFFFF00 - Reset PC")
         else:
             ser.write(bytes([0x00, 0xF0, 0xFF]))
+            print("0xFFF000 - Maintain PC")
 
 else:
     print("Error: Failed to open serial port.")
