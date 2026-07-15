@@ -110,7 +110,7 @@ module cpu_core(
         if (reset_pc) begin
             pc_load = 1'b1;
             pc_load_addr = 8'b0;
-        end else if (cpu_enable && !halt_state_reg) begin
+        end else if (cpu_enable && !halt_state_reg && !halt_detect) begin
             case (pc_select)
                 2'b00: begin
                     pc_enable = 1'b1;
