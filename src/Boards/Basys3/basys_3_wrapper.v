@@ -65,6 +65,7 @@ module basys_3_wrapper(
     cpu_instruction_loader cpu_instruction_loader(
         .clk(clk_system),
         .rst(rst),
+        .cpu_halted(cpu_halted),
         .packet_ready(packet_ready),
         .data_ack(iram_packet_receive),
         .program_mode(program_mode),

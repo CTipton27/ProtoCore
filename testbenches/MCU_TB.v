@@ -62,29 +62,189 @@ module MCU_TB;
         #100000; 
         
         program_mode = 1;
-        #100;
+        #10000;
 
         //Start word
         send_uart_byte(8'h00);
         send_uart_byte(8'h00);
         send_uart_byte(8'hFF);
         
-        //Data word 1
-        send_uart_byte(8'hF0);
-        send_uart_byte(8'h00);
-        send_uart_byte(8'h6C);
-        
-        //Data word 2
-        send_uart_byte(8'hAC);
-        send_uart_byte(8'hF2);
-        send_uart_byte(8'h8F);
+send_uart_byte(8'h01);
+send_uart_byte(8'h01);
+send_uart_byte(8'h80);
+
+send_uart_byte(8'h01);
+send_uart_byte(8'h10);
+send_uart_byte(8'hB0);
+
+send_uart_byte(8'hFF);
+send_uart_byte(8'h10);
+send_uart_byte(8'hB0);
+
+send_uart_byte(8'h00);
+send_uart_byte(8'h00);
+send_uart_byte(8'hB0);
+
+send_uart_byte(8'hFE);
+send_uart_byte(8'h00);
+send_uart_byte(8'hB0);
+
+send_uart_byte(8'h00);
+send_uart_byte(8'h0F);
+send_uart_byte(8'hA0);
+
+send_uart_byte(8'h80);
+send_uart_byte(8'h0F);
+send_uart_byte(8'h9F);
+
+send_uart_byte(8'h07);
+send_uart_byte(8'h0D);
+send_uart_byte(8'h80);
+
+send_uart_byte(8'h00);
+send_uart_byte(8'h0F);
+send_uart_byte(8'h7F);
+
+send_uart_byte(8'hFF);
+send_uart_byte(8'h0D);
+send_uart_byte(8'h8D);
+
+send_uart_byte(8'hFD);
+send_uart_byte(8'h00);
+send_uart_byte(8'hDD);
+
+send_uart_byte(8'h01);
+send_uart_byte(8'h0E);
+send_uart_byte(8'hA0);
+
+send_uart_byte(8'h01);
+send_uart_byte(8'h0E);
+send_uart_byte(8'h9E);
+
+send_uart_byte(8'h07);
+send_uart_byte(8'h0D);
+send_uart_byte(8'h80);
+
+send_uart_byte(8'h00);
+send_uart_byte(8'h0E);
+send_uart_byte(8'h6E);
+
+send_uart_byte(8'hFF);
+send_uart_byte(8'h0D);
+send_uart_byte(8'h8D);
+
+send_uart_byte(8'hFD);
+send_uart_byte(8'h00);
+send_uart_byte(8'hDD);
+
+send_uart_byte(8'h01);
+send_uart_byte(8'h0D);
+send_uart_byte(8'h80);
+
+send_uart_byte(8'h00);
+send_uart_byte(8'h01);
+send_uart_byte(8'hAD);
+
+send_uart_byte(8'h00);
+send_uart_byte(8'h02);
+send_uart_byte(8'hAD);
+
+send_uart_byte(8'h00);
+send_uart_byte(8'h03);
+send_uart_byte(8'hAD);
+
+send_uart_byte(8'h00);
+send_uart_byte(8'h01);
+send_uart_byte(8'h71);
+
+send_uart_byte(8'h00);
+send_uart_byte(8'h03);
+send_uart_byte(8'h63);
+
+send_uart_byte(8'h02);
+send_uart_byte(8'h00);
+send_uart_byte(8'hCD);
+
+send_uart_byte(8'h00);
+send_uart_byte(8'hF3);
+send_uart_byte(8'h03);
+
+send_uart_byte(8'h1C);
+send_uart_byte(8'h00);
+send_uart_byte(8'hE0);
+
+send_uart_byte(8'h00);
+send_uart_byte(8'hE1);
+send_uart_byte(8'h01);
+
+send_uart_byte(8'h1C);
+send_uart_byte(8'h00);
+send_uart_byte(8'hE0);
+
+send_uart_byte(8'h00);
+send_uart_byte(8'h32);
+send_uart_byte(8'h32);
+
+send_uart_byte(8'h00);
+send_uart_byte(8'h22);
+send_uart_byte(8'h41);
+
+send_uart_byte(8'h03);
+send_uart_byte(8'h00);
+send_uart_byte(8'hCD);
+
+send_uart_byte(8'h00);
+send_uart_byte(8'h26);
+send_uart_byte(8'h00);
+
+send_uart_byte(8'h00);
+send_uart_byte(8'h0D);
+send_uart_byte(8'h80);
+
+send_uart_byte(8'h12);
+send_uart_byte(8'h00);
+send_uart_byte(8'hE0);
+
+send_uart_byte(8'hFE);
+send_uart_byte(8'h20);
+send_uart_byte(8'hB0);
+
+send_uart_byte(8'hFF);
+send_uart_byte(8'h60);
+send_uart_byte(8'hB0);
+
+send_uart_byte(8'h01);
+send_uart_byte(8'h0D);
+send_uart_byte(8'h80);
+
+send_uart_byte(8'h26);
+send_uart_byte(8'h00);
+send_uart_byte(8'hE0);
+
+send_uart_byte(8'h01);
+send_uart_byte(8'h60);
+send_uart_byte(8'hB0);
+
+send_uart_byte(8'h00);
+send_uart_byte(8'h20);
+send_uart_byte(8'hB0);
+
+send_uart_byte(8'h05);
+send_uart_byte(8'h00);
+send_uart_byte(8'hE0);
         
         //Stop word w/ Reset
         send_uart_byte(8'h00);
-        send_uart_byte(8'h0F);
+        send_uart_byte(8'hF0);
         send_uart_byte(8'hFF);
 
+#10000;
+program_mode = 0;
+        #1000000;
+        rst = 1;
         #10000;
+        rst = 0;
+        #1000000;
         $stop;
     end
 endmodule

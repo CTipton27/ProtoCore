@@ -62,7 +62,7 @@ module cpu_instruction_loader(
                 IDLE: begin
                     // Hold halt request until the CPU has cleared its halt
                     if (clear_halt) begin
-                        if (cpu_halted)
+                        if (!cpu_halted)
                             clear_halt <= 0;
                     end else
                     // Hold reset request until the CPU has actually reset.
