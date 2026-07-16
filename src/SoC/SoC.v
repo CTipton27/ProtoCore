@@ -16,6 +16,7 @@ module soc(
     output [7:0] cpu_ra_data,
     output [7:0] cpu_rb_data,
     output [7:0] cpu_data_out,
+    output [23:0] cpu_instruction,
     output [7:0] pc_addr_out,
     output cpu_halted,
     
@@ -86,4 +87,5 @@ module soc(
     assign iram_we = iram_write_enable;
     assign pc_addr_out = pc_addr;
     assign mmio_data = mmio_data_reg;
+    assign cpu_instruction = instruction;
 endmodule
