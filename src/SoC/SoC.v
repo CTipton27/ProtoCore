@@ -6,7 +6,7 @@ module soc(
     input clk_sys,
     input rst,
     input cpu_enable,
-    input reset_pc,
+    input reset_pc_req,
     input clear_halt,
     input iram_write_enable,
     input [23:0] iram_write_data,
@@ -20,8 +20,9 @@ module soc(
     output [7:0] pc_addr_out,
     output cpu_halted,
     
-    output iram_packet_receive,
-    output [15:0] mmio_data
+    output iram_packet_ack,
+    output [15:0] mmio_data,
+    output reset_pc_ack
     );
     
     wire [23:0] instruction;
@@ -37,7 +38,7 @@ module soc(
         .clk(clk_cpu),
         .rst(rst),
         .cpu_enable(cpu_enable),
-        .reset_pc(reset_pc),
+        .reset_pc_req(reset_pc_req),
         .clear_halt(clear_halt),
         .instruction(instruction),
         .data_in(cpu_data_in),
@@ -47,7 +48,8 @@ module soc(
         .data_addr(ram_data_addr),
         .data_write_enable(ram_write_enable),
         .pc_addr(pc_addr),
-        .halt_state(cpu_halted)
+        .halt_state(cpu_halted),
+        .reset_pc_ack(reset_pc_ack)
     );
     
     instruction_ram instruction_ram(
@@ -56,7 +58,7 @@ module soc(
         .addr(iram_addr),
         .data_in(iram_write_data),
         .data_out(instruction),
-        .data_ack(iram_packet_receive)
+        .data_ack(iram_packet_ack)
     );
     
     ram ram(

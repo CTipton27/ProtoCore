@@ -5,7 +5,7 @@ module cpu_core(
     input clk,
     input rst,
     input cpu_enable,
-    input reset_pc,
+    input reset_pc_req,
     input clear_halt,
 
     input  [23:0] instruction,
@@ -20,13 +20,15 @@ module cpu_core(
     output data_write_enable,
 
     output [7:0] pc_addr,
-    output halt_state
+    output halt_state,
+    output reset_pc_ack
 );
 
     reg halt_state_reg;
     wire halt_detect;
     reg [7:0] halt_imm;
     reg pc_enable;
+    wire pc_load_ack;
 
     wire reg_write_enable, control_data_write_enable;
     wire [3:0] ra_addr, rb_addr, rd_addr;
@@ -86,7 +88,8 @@ module cpu_core(
         .enable(pc_enable),
         .load_enable(pc_load),
         .load_data(pc_load_addr),
-        .addr(pc_addr)
+        .addr(pc_addr),
+        .load_ack(pc_load_ack)
     );
 
     branch_calc branch_calc(
@@ -107,7 +110,7 @@ module cpu_core(
         pc_load = 1'b0;
         pc_load_addr = 8'b0;
 
-        if (reset_pc) begin
+        if (reset_pc_req) begin
             pc_load = 1'b1;
             pc_load_addr = 8'b0;
         end else if (cpu_enable && !halt_state_reg && !halt_detect) begin
@@ -147,4 +150,5 @@ module cpu_core(
     assign data_out = halt_state_reg ? halt_imm : register_b_data;
     assign halt_state = halt_state_reg;
     assign data_write_enable = control_data_write_enable && cpu_enable && !halt_state_reg;
+    assign reset_pc_ack = reset_pc_req && pc_load_ack;
 endmodule

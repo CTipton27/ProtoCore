@@ -2,18 +2,18 @@
 ///////////////////////////////////////////////////////////////////
 //This module is the interface between the RX channel of UART and
 //The rest of the cpu core. when the system is HALTed, it will allow
-//recieving. this module just filters the uart packets and outputs
-//when a packet is ready, and what the packet is. As of now, it hears a packet_ack
-//signal, but does not act on it besides turning off packet_ready. Future updates will
-//add some error signaling when a packet was not acknowledged perhaps through a TX transmission.
+//recieving. this module just filters the uart bytes and outputs
+//when a byte is ready, and what the byte is. As of now, it hears a byte_ack
+//signal, but does not act on it besides turning off byte_ready. Future updates will
+//add some error signaling when a byte was not acknowledged perhaps through a TX transmission.
 ///////////////////////////////////////////////////////////////////
 module uart_rx(
     input clk,
     input rst,
     input rx,
-    input packet_ack,
-    output reg packet_ready = 0,
-    output reg [7:0] uart_packet = 0
+    input byte_ack,
+    output reg byte_ready = 0,
+    output reg [7:0] uart_byte = 0
     );
 
     parameter BAUD_RATE = 115200;
@@ -50,18 +50,18 @@ module uart_rx(
             tick_counter <= 0;
             bit_count    <= 0;
             shift_reg    <= 0;
-            uart_packet  <= 0;
-            packet_ready <= 0;
+            uart_byte  <= 0;
+            byte_ready <= 0;
         end else begin
-            // Clear packet_ready only on ack
-            if (packet_ready && packet_ack)
-                packet_ready <= 0;
+            // Clear byte_ready only on ack
+            if (byte_ready && byte_ack)
+                byte_ready <= 0;
 
             case (state)
                 IDLE: begin
                     // ONLY trigger on the actual transition edge, and ONLY if we are ready for data
                     if (rx_falling_edge) begin
-                        if (!packet_ready) begin
+                        if (!byte_ready) begin
                             tick_counter <= 0;
                             state <= START;
                         end else begin
@@ -92,8 +92,8 @@ module uart_rx(
                         end else begin
                             // Stop bit check using synchronized rx signal
                             if (rx_sync[1] == 1) begin
-                                uart_packet <= shift_reg;
-                                packet_ready <= 1;
+                                uart_byte <= shift_reg;
+                                byte_ready <= 1;
                             end
                             state <= IDLE;
                         end

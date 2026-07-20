@@ -6,23 +6,18 @@ root = Path(__file__).resolve().parent.parent
 src_dir = root / "src"
 mem_src = src_dir / "program.mem"
 
-ports = serial.tools.list_ports.comports()
-for port in ports:
-    print(port.device, port.description)
+ports = list(serial.tools.list_ports.comports())
+for p in ports:
+    print(p.device, p.description)
 
-port = input("Please enter the serial port: ")
-
-ser = serial.Serial(port, 115200, timeout=1)
-
-if ser.is_open:
-    print("Connected...")
-    confirm_load = input("Load program.mem contents? y/n: ")
-    if confirm_load.lower().strip() == "y":
+try:
+    with serial.Serial(ports[0].device, 115200, timeout=1) as ser:
+        print("Connected...")
         reset_pc = input("Reset program counter after write? y/n: ")
         display = input ("Display mode (reg / mmio): ")
-        ser.write(bytes([0x00, 0x00, 0xFF]))
+        ser.write(bytes([0xF1]))
         time.sleep(0.005)
-        print("0xFF0000 - Begin write")
+        print("0xF1 - Begin write")
         with open(mem_src, "r") as mem_file:
             for line in mem_file:
                 line = line.strip()
@@ -34,28 +29,26 @@ if ser.is_open:
                 b2 = (instr_val >> 16) & 0xFF
 
                 ser.write(bytes([b0, b1, b2]))
-                print(f"{b2:02X} {b1:02X} {b0:02X}")
+                print(f"{b0:02X} {b1:02X} {b2:02X}")
                 time.sleep(0.005)
 
         #send display_mode parameter
         if display.lower().strip() == "reg":
-            ser.write(bytes([0x00, 0xE0, 0xFF]))
+            ser.write(bytes([0xF5]))
             time.sleep(0.005)
-            print("0xFFE000 - Register display mode")
+            print("0xF5 - Register display mode")
         elif display.lower().strip() == "mmio":
-            ser.write(bytes([0x00, 0xD0, 0xFF]))
+            ser.write(bytes([0xF4]))
             time.sleep(0.005)
-            print("0xFFD000 - MMIO display mode")
+            print("0xF4 - MMIO display mode")
 
         #Send reset_pc parameter
         if reset_pc.lower().strip() == "y":
-            ser.write(bytes([0x00, 0xFF, 0xFF]))
-            print("0xFFFF00 - Reset PC")
+            ser.write(bytes([0xF3]))
+            print("0xF3 - Reset PC")
         else:
-            ser.write(bytes([0x00, 0xF0, 0xFF]))
-            print("0xFFF000 - Maintain PC")
+            ser.write(bytes([0xF2]))
+            print("0xF2 - Maintain PC")
 
-else:
-    print("Error: Failed to open serial port.")
-
-mem_file.close()
+except serial.SerialException as e:
+    print(f"Error: Failed to open serial port: {e}")

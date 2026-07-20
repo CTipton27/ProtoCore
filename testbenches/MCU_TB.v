@@ -14,16 +14,15 @@ module MCU_TB;
     // Instantiate DUT
     basys_3_wrapper DUT (
         .clk_system(clk),
-        .rst(rst),
+        .hard_rst(rst),
         .clk_speed(clk_speed),
         .clk_visual(clk_visual),
         .UART_rx(UART_rx),
-        .program_mode(program_mode),
         .seg(seg),
         .an(an),
         .led(led)
     );
-
+    
     // Clock generation: 100 MHz
     initial clk = 0;
     always #5 clk = ~clk;
@@ -63,11 +62,9 @@ module MCU_TB;
         
         program_mode = 1;
         #10000;
-
-        //Start word
-        send_uart_byte(8'h00);
-        send_uart_byte(8'h00);
-        send_uart_byte(8'hFF);
+        
+        
+        send_uart_byte(8'hF1);
         
 send_uart_byte(8'h01);
 send_uart_byte(8'h01);
@@ -234,9 +231,7 @@ send_uart_byte(8'h00);
 send_uart_byte(8'hE0);
         
         //Stop word w/ Reset
-        send_uart_byte(8'h00);
-        send_uart_byte(8'hF0);
-        send_uart_byte(8'hFF);
+        send_uart_byte(8'hF3);
 
 #10000;
 program_mode = 0;
