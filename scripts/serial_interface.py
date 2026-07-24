@@ -88,7 +88,7 @@ try:
                     "Reset PC"
                 )
 
-            elif cmd == "6":
+            elif cmd == "6" or cmd == "":
                 send_cmd(
                     ser,
                     [0xF8],
