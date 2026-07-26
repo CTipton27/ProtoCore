@@ -27,6 +27,16 @@ formats = {
     "HALT":  {"format":["imm"],           "opcode":"1111"},
 }
 
+
+pseudo = {
+    "NOP": ["ADD", "R0", "R0", "R0"],
+    "MOV": ["ADD", "{0}", "{1}", "R0"],
+    "CLR": ["ADD", "{0}", "R0", "R0"],
+    "INC": ["ADDI", "{0}", "{0}", "1"],
+    "DEC": ["ADDI", "{0}", "{0}", "-1"],
+    "NEG": ["SUB", "{0}", "R0", "{0}"],
+}
+
 def reg_to_bin(reg):
     if not reg.startswith("R"):
         raise ValueError(f"Invalid register {reg}")
@@ -79,9 +89,11 @@ with open(assembly_src) as src:
 
             line = remainder.strip()
 
-        # If there's still text, it's an instruction.
+        # If there's still text, it's an instruction, tokenize it and continue.
         if line:
-            program.append(line)
+            tokens = [t for t in re.split(r"[,\s]+", line) if t]
+
+            program.append(tokens)
             pc += 1
 
 
@@ -91,12 +103,20 @@ with open(assembly_src) as src:
 
 with open(mem_src, "w") as mem:
 
-    for pc, line in enumerate(program):
-
-        tokens = [t for t in re.split(r"[,\s]+", line) if t]
+    for pc, tokens in enumerate(program):
 
         mnemonic = tokens[0]
 
+        # Convert all pseudoinstructions to regular instructions
+        if mnemonic in pseudo:
+            operands = tokens[1:]
+            expansion = []
+            for field in pseudo[mnemonic]:
+                expansion.append(field.format(*operands))
+            tokens = expansion
+            mnemonic = tokens[0]
+
+        #ensure all commands are valid
         if mnemonic not in formats:
             raise ValueError(f"Unknown instruction '{mnemonic}'")
 
@@ -133,4 +153,4 @@ with open(mem_src, "w") as mem:
 
                 imm_bin = imm_to_bin(value)
 
-        mem.write(f"{opcode}{ra_bin}{rb_bin}{rd_bin}{imm_bin}\n")
+        mem.write(f"{opcode}{rd_bin}{ra_bin}{rb_bin}{imm_bin}\n")

@@ -67,3 +67,9 @@ load_frame:
 STORE R0, R6, 1
 STORE R0, R2, 0
 JMP R0, main_loop
+NOP
+MOV R6, R5
+CLR R6
+INC R6
+DEC R6
+NEG R6
