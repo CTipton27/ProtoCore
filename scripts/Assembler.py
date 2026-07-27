@@ -21,20 +21,48 @@ formats = {
     "ANDI":  {"format":["rd","ra","imm"], "opcode":"1001"},
     "LOAD":  {"format":["rd","ra","imm"], "opcode":"1010"},
     "STORE": {"format":["ra","rb","imm"], "opcode":"1011"},
-    "BEQ":   {"format":["ra","rb","imm"], "opcode":"1100"},
-    "BNE":   {"format":["ra","rb","imm"], "opcode":"1101"},
+    "BEQ":   {"format":["ra","rb","imm"], "opcode":"1100", "pc_relative": True},
+    "BNE":   {"format":["ra","rb","imm"], "opcode":"1101", "pc_relative": True},
     "JMP":   {"format":["ra","imm"],      "opcode":"1110"},
     "HALT":  {"format":["imm"],           "opcode":"1111"},
 }
 
 
-pseudo = {
-    "NOP": ["ADD", "R0", "R0", "R0"],
-    "MOV": ["ADD", "{0}", "{1}", "R0"],
-    "CLR": ["ADD", "{0}", "R0", "R0"],
-    "INC": ["ADDI", "{0}", "{0}", "1"],
-    "DEC": ["ADDI", "{0}", "{0}", "-1"],
-    "NEG": ["SUB", "{0}", "R0", "{0}"],
+expansions = {
+    # Pseudoinstructions
+    "NOP": [["ADD", "R0", "R0", "R0"]],
+    "MOV": [["ADD", "{0}", "{1}", "R0"]],
+    "CLR": [["ADD", "{0}", "R0", "R0"]],
+    "INC": [["ADDI", "{0}", "{0}", "1"]],
+    "DEC": [["ADDI", "{0}", "{0}", "-1"]],
+    "NEG": [["SUB", "{0}", "R0", "{0}"]],
+    "RJMP": [["BEQ", "R0", "R0", "{0}"]],
+    "BEQZ": [["BEQ", "{0}", "R0", "{1}"]],
+    "BNEZ": [["BNE", "{0}", "R0", "{1}"]],
+    "LDI": [["ADDI", "{0}", "R0", "{1}"]],
+    "JMPA": [["JMP", "R0", "{0}"]],
+
+    #macros
+    "NOR": [
+        ["OR", "{0}", "{1}", "{2}"],
+        ["NOT", "{0}", "{0}"]
+    ],
+
+    "NAND": [
+        ["AND", "{0}", "{1}", "{2}"],
+        ["NOT", "{0}", "{0}"]
+    ],
+
+    "XNOR": [
+        ["XOR", "{0}", "{1}", "{2}"],
+        ["NOT", "{0}", "{0}"]
+    ],
+
+    "SWAP": [
+        ["XOR", "{0}", "{1}", "{0}"],
+        ["XOR", "{1}", "{0}", "{1}"],
+        ["XOR", "{0}", "{1}", "{0}"]
+    ]
 }
 
 def reg_to_bin(reg):
@@ -58,6 +86,24 @@ def imm_to_bin(val):
 
     return f"{val:08b}"
 
+def expand_instruction(tokens):
+    mnemonic = tokens[0]
+    operands = tokens[1:]
+
+    if mnemonic in expansions:
+        templates = expansions[mnemonic]
+
+    else:
+        return [tokens]
+
+    expanded = []
+
+    for instruction in templates:
+        expanded.append(
+            [field.format(*operands) for field in instruction]
+        )
+
+    return expanded
 
 # ----------------------------
 # PASS 1
@@ -93,8 +139,10 @@ with open(assembly_src) as src:
         if line:
             tokens = [t for t in re.split(r"[,\s]+", line) if t]
 
-            program.append(tokens)
-            pc += 1
+            expanded = expand_instruction(tokens)
+
+            program.extend(expanded)
+            pc += len(expanded)
 
 
 # ----------------------------
@@ -106,15 +154,6 @@ with open(mem_src, "w") as mem:
     for pc, tokens in enumerate(program):
 
         mnemonic = tokens[0]
-
-        # Convert all pseudoinstructions to regular instructions
-        if mnemonic in pseudo:
-            operands = tokens[1:]
-            expansion = []
-            for field in pseudo[mnemonic]:
-                expansion.append(field.format(*operands))
-            tokens = expansion
-            mnemonic = tokens[0]
 
         #ensure all commands are valid
         if mnemonic not in formats:
@@ -144,10 +183,14 @@ with open(mem_src, "w") as mem:
             elif operand_type == "rb":
                 rb_bin = reg_to_bin(operand)
 
-            elif operand_type == "imm":
 
+            elif operand_type == "imm":
                 if operand in labels:
                     value = labels[operand]
+
+                    #checks if pc_relative flag is set, defaults to false otherwise.
+                    if formats[mnemonic].get("pc_relative", False):
+                        value -= (pc + 1)
                 else:
                     value = operand
 
