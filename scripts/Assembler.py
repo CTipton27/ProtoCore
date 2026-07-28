@@ -110,6 +110,7 @@ def expand_instruction(tokens):
 # ----------------------------
 
 labels = {}
+constants = {}
 program = []
 
 pc = 0
@@ -117,10 +118,19 @@ pc = 0
 with open(assembly_src) as src:
 
     for line in src:
-
+        # Remove all comments
         line = line.split(";")[0].strip()
-
         if not line:
+            continue
+
+        # Collect all constants
+        if line.lower().startswith(".equ"):
+            _, name, value = [t.strip() for t in re.split(r"[,\s]+", line) if t]
+
+            if name in labels or name in constants:
+                raise ValueError(f"Duplicate symbol '{name}'")
+
+            constants[name] = value
             continue
 
         # Keep consuming labels until there aren't any left.
@@ -173,6 +183,9 @@ with open(mem_src, "w") as mem:
             raise ValueError(f"{mnemonic}: wrong number of operands")
 
         for operand_type, operand in zip(expected, operands):
+            # Register Aliasing
+            if operand in constants:
+                operand = constants[operand]
 
             if operand_type == "rd":
                 rd_bin = reg_to_bin(operand)
@@ -188,9 +201,12 @@ with open(mem_src, "w") as mem:
                 if operand in labels:
                     value = labels[operand]
 
-                    #checks if pc_relative flag is set, defaults to false otherwise.
                     if formats[mnemonic].get("pc_relative", False):
                         value -= (pc + 1)
+
+                elif operand in constants:
+                    value = constants[operand]
+
                 else:
                     value = operand
 
