@@ -25,9 +25,9 @@ module control_unit(
 );
 
     wire [3:0] inst_opcode = instruction[23:20];
-    wire [3:0] inst_ra     = instruction[19:16];
-    wire [3:0] inst_rb     = instruction[15:12];
-    wire [3:0] inst_rd     = instruction[11:8];
+    wire [3:0] inst_rd     = instruction[19:16];
+    wire [3:0] inst_ra     = instruction[15:12];
+    wire [3:0] inst_rb     = instruction[11:8];
 
     assign imm_value = instruction[7:0];
 
