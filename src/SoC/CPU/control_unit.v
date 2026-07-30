@@ -14,12 +14,13 @@ module control_unit(
     output reg [2:0] alu_opcode,
     output reg alu_src_immediate,
 
-    output reg data_write_enable,
-    output reg is_load,
+    output reg mem_write_enable,
+    output reg mem_read_enable,
 
     output reg [1:0] pc_select, // 00:PC+1, 01:branch, 10:jump
 
     output reg halt_detect,
+    output reg mem_space,
 
     output [7:0] imm_value
 );
@@ -33,8 +34,8 @@ module control_unit(
 
     always @(*) begin
         reg_write_enable   = 1'b0;
-        data_write_enable  = 1'b0;
-        is_load            = 1'b0;
+        mem_write_enable  = 1'b0;
+        mem_read_enable   = 1'b0;
         alu_src_immediate  = 1'b0;
         alu_opcode         = 3'b000;
         pc_select          = 2'b00;
@@ -42,6 +43,7 @@ module control_unit(
         rd_addr            = 4'b0;
         ra_addr            = 4'b0;
         rb_addr            = 4'b0;
+        mem_space          = 1'b0;
 
         case (inst_opcode)
             // Binary ALU
@@ -73,20 +75,22 @@ module control_unit(
             // LOAD
             4'hA: begin
                 reg_write_enable = 1'b1;
-                is_load = 1'b1;
+                mem_read_enable = 1'b1;
                 alu_opcode = 3'b000;
                 rd_addr = inst_rd;
                 ra_addr = inst_ra;
                 alu_src_immediate = 1'b1;
+                mem_space = instruction[8]; //ATTR bit in unused RB field
             end
 
             // STORE
             4'hB: begin
-                data_write_enable = 1'b1;
+                mem_write_enable = 1'b1;
                 alu_opcode = 3'b000;
                 ra_addr = inst_ra;
                 rb_addr = inst_rb;
                 alu_src_immediate = 1'b1;
+                mem_space = instruction[16]; //ATTR bit in unused RD field
             end
 
             // BEQ

@@ -41,15 +41,17 @@ module soc(
         .reset_pc_req(reset_pc_req),
         .clear_halt(clear_halt),
         .instruction(instruction),
-        .data_in(cpu_data_in),
-        .data_out(cpu_data_out),
+        .mem_read_data(cpu_data_in),
+        .mem_write_data(cpu_data_out),
+        .mem_addr(),
+        .mem_write_enable(),
+        .mem_read_enable(),
         .register_a_data(cpu_ra_data),
         .register_b_data(cpu_rb_data),
-        .data_addr(ram_data_addr),
-        .data_write_enable(ram_write_enable),
         .pc_addr(pc_addr),
         .halt_state(cpu_halted),
-        .reset_pc_ack(reset_pc_ack)
+        .reset_pc_ack(reset_pc_ack),
+        .halt_code(halt_code)
     );
     
     instruction_ram instruction_ram(

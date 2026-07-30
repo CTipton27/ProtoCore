@@ -1,12 +1,13 @@
 `timescale 1ns / 1ps
-//FILE: ram.v
+//FILE: mem_bus.v
 
-module ram(
+module mem_bus(
     input clk,
     input [7:0] addr,
     input [7:0] write_data,
     input write_en,
-    output [7:0] read_data
+    output [7:0] read_data,
+    output [15:0] mmio_data
     );
     reg [7:0] mem [255:0];
     
@@ -16,4 +17,5 @@ module ram(
     
     
     assign read_data = mem[addr];
+    assign mmio_data = {mem[255], mem[254]};
 endmodule

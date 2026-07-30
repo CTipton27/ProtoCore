@@ -10,33 +10,34 @@ module cpu_core(
 
     input  [23:0] instruction,
 
-    input  [7:0] data_in,
-    output [7:0] data_out,
+    input  [7:0] mem_read_data,
+    output [7:0] mem_write_data,
+    output [8:0] mem_addr,
+    output mem_write_enable,
+    output mem_read_enable,
 
     output [7:0] register_a_data,
     output [7:0] register_b_data,
 
-    output [7:0] data_addr,
-    output data_write_enable,
-
     output [7:0] pc_addr,
     output halt_state,
-    output reset_pc_ack
+    output reset_pc_ack,
+    output reg [7:0] halt_code
 );
 
     reg halt_state_reg;
     wire halt_detect;
-    reg [7:0] halt_imm;
     reg pc_enable;
     wire pc_load_ack;
 
-    wire reg_write_enable, control_data_write_enable;
+    wire reg_write_enable, mem_write_request, mem_read_request;
     wire [3:0] ra_addr, rb_addr, rd_addr;
+    wire mem_space;
+    wire [7:0] data_addr;
 
     wire alu_src_immediate, alu_zero, alu_carry;
     wire [2:0] alu_opcode;
-
-    wire is_load;
+    
     wire [1:0] pc_select;
     
     wire [7:0] imm_value;
@@ -56,10 +57,11 @@ module cpu_core(
         .rb_addr(rb_addr),
         .alu_opcode(alu_opcode),
         .alu_src_immediate(alu_src_immediate),
-        .data_write_enable(control_data_write_enable),
-        .is_load(is_load),
+        .data_write_enable(mem_write_request),
+        .data_read_enable(mem_read_request),
         .pc_select(pc_select),
         .halt_detect(halt_detect),
+        .mem_space(mem_space),
         .imm_value(imm_value)
     );
 
@@ -68,10 +70,10 @@ module cpu_core(
         .cpu_enable(cpu_enable),
         .alu_src_immediate(alu_src_immediate),
         .alu_opcode(alu_opcode),
-        .extern_data(data_in),
+        .extern_data(mem_read_data),
         .imm_data(imm_value),
         .reg_write_enable(reg_write_enable && cpu_enable && !halt_state_reg),
-        .wb_select(is_load),
+        .wb_select(mem_read_request),
         .rd_addr(rd_addr),
         .ra_addr(ra_addr),
         .rb_addr(rb_addr),
@@ -136,19 +138,21 @@ module cpu_core(
     always @(posedge clk) begin
         if (rst) begin
             halt_state_reg <= 1'b0;
-            halt_imm <= 8'b0;
+            halt_code <= 8'b0;
         end else begin
             if (clear_halt)
                 halt_state_reg <= 1'b0;
             else if (!halt_state_reg && halt_detect) begin
                 halt_state_reg <= 1'b1;
-                halt_imm <= imm_value;
+                halt_code <= imm_value;
             end
         end
     end
         
-    assign data_out = halt_state_reg ? halt_imm : register_b_data;
+    assign mem_write_data = register_b_data;
     assign halt_state = halt_state_reg;
-    assign data_write_enable = control_data_write_enable && cpu_enable && !halt_state_reg;
+    assign mem_write_enable = mem_write_request && cpu_enable && !halt_state_reg;
+    assign mem_read_enable = mem_read_request && cpu_enable && !halt_state_reg;
     assign reset_pc_ack = reset_pc_req && pc_load_ack;
+    assign mem_addr = {mem_space, data_addr};
 endmodule
