@@ -1,4 +1,5 @@
 `timescale 1ns / 1ps
+`include "ProtoCore.vh"
 ///////////////////////////////////////////////////////////////////
 //This module is the interface between the RX channel of UART and
 //The rest of the cpu core. when the system is HALTed, it will allow
@@ -15,11 +16,8 @@ module uart_rx(
     output reg byte_ready = 0,
     output reg [7:0] uart_byte = 0
     );
-
-    parameter BAUD_RATE = 115200;
-    parameter SYS_CLK_SPEED = 100_000_000;
     
-    parameter TICKS_PER_BIT = SYS_CLK_SPEED / BAUD_RATE;
+    parameter TICKS_PER_BIT = `SYS_CLK_HZ / `UART_BAUD_RATE;
     parameter START_DELAY = TICKS_PER_BIT / 2;
 
     // FSM States

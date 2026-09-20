@@ -1,4 +1,5 @@
 `timescale 1ns / 1ps
+`include "ProtoCore.vh"
 //FILE: uart_tx.v
 
 module uart_tx(
@@ -11,11 +12,8 @@ module uart_tx(
     output reg tx = 1,
     output reg busy = 0
     );
-
-    parameter BAUD_RATE = 115200;
-    parameter SYS_CLK_SPEED = 100_000_000;
     
-    parameter TICKS_PER_BIT = SYS_CLK_SPEED / BAUD_RATE;
+    parameter TICKS_PER_BIT = `SYS_CLK_HZ / `UART_BAUD_RATE;
 
     // FSM States
     parameter  IDLE    = 1'b0,

@@ -34,6 +34,10 @@ module soc(
     reg [15:0] mmio_data_reg;
     reg mmio_pending;
     
+    reg [7:0] cpu_addr;
+    reg cpu_write_enable;
+    reg cpu_read_enable;
+    
     cpu_core cpu_core(
         .clk(clk_cpu),
         .rst(rst),
@@ -43,9 +47,9 @@ module soc(
         .instruction(instruction),
         .mem_read_data(cpu_data_in),
         .mem_write_data(cpu_data_out),
-        .mem_addr(),
-        .mem_write_enable(),
-        .mem_read_enable(),
+        .mem_addr(cpu_addr),
+        .mem_write_enable(cpu_write_enable),
+        .mem_read_enable(cpu_read_enable),
         .register_a_data(cpu_ra_data),
         .register_b_data(cpu_rb_data),
         .pc_addr(pc_addr),
@@ -61,6 +65,25 @@ module soc(
         .data_in(iram_write_data),
         .data_out(instruction),
         .data_ack(iram_packet_ack)
+    );
+    
+    mem_bus mem_bus(
+    .clk_cpu(clk_cpu),
+    .clk_sys(clk_sys),
+    .rst(rst),
+
+    .cpu_addr(cpu_addr[7:0]),
+    .cpu_write_en(cpu_write_enable),
+    .cpu_write_data(cpu_data_out),
+    .cpu_read_data(cpu_data_in),
+    .cpu_mode_select(cpu_addr[8]),
+    
+    .ext_addr(),
+    .ext_write_en(),
+    .ext_write_data(),
+    .ext_read_data(),
+    
+    .mmio_led()
     );
     
     ram ram(
