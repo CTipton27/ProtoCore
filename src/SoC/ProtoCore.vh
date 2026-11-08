@@ -20,6 +20,24 @@
 `define MMIO_UART_RX 8'h02
 `define MMIO_UART_TX 8'h03
 `define MMIO_UART_ST 8'h04
+`define MMIO_GPHC_ST 8'h05
+`define MMIO_VRAM_AD 8'h06
+
+//----------------------------
+// Graphics
+//----------------------------
+`define FMT_OFF         3'h0
+
+// Tier 1: 128 Bytes (Double-buffer friendly)
+`define FMT_32x32_1BPP  3'h1
+`define FMT_32x16_2BPP  3'h2
+`define FMT_16x16_4BPP  3'h3
+
+// Tier 2: 256 Bytes (Max single frame)
+`define FMT_64x32_1BPP  3'h4
+`define FMT_32x32_2BPP  3'h5
+`define FMT_32x16_4BPP  3'h6
+`define FMT_16x16_8BPP  3'h7
 
 //----------------------------
 // System Commands

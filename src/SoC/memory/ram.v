@@ -3,17 +3,20 @@
 
 module ram(
     input clk,
-    input [7:0] addr,
+    input [7:0] addr_cpu,
+    input [7:0] addr_b,
     input [7:0] write_data,
     input write_en,
-    output [7:0] read_data
+    output [7:0] read_data_cpu,
+    output [7:0] read_data_b
     );
     reg [7:0] mem [255:0];
     
     always @ (posedge clk) begin
-        if (write_en) mem[addr] <= write_data;
+        if (write_en) mem[addr_cpu] <= write_data;
     end
     
     
-    assign read_data = mem[addr];
+    assign read_data_cpu = mem[addr_cpu];
+    assign read_data_b   = mem[addr_b];
 endmodule

@@ -86,15 +86,6 @@ module soc(
     .mmio_led()
     );
     
-    ram ram(
-        .clk(clk_cpu),
-        .addr(ram_data_addr),
-        .write_data(cpu_data_out),
-        .write_en(ram_write_enable),
-        .read_data(cpu_data_in),
-        .mmio_data(ram_mmio_data)
-    );
-    
     always @(posedge clk_cpu or posedge rst) begin
         if (rst) begin
             mmio_pending <= 0;
