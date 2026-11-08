@@ -8,7 +8,8 @@ module graphics_top(
     
     // Two 8-lane Data Ports
     input  wire [7:0] ram_r_data,      // RAM READ DATA (from system RAM for streamer)
-    inout  wire [7:0] sram_data,       // INOUT SRAM_DATA (shared bidirectional VRAM bus)
+    input  wire [7:0] sram_read_data,  // INPUT SRAM_DATA (VRAM bus)
+    output wire [7:0] sram_write_data, // OUTPUT SRAM_DATA (VRAM bus)
     
     // Two 8-lane Address Ports
     output wire [7:0] ram_addr,        // RAM ADDR (system RAM read address from streamer)
@@ -49,14 +50,8 @@ module graphics_top(
     wire [7:0] vram_r_addr;
     wire [7:0] vram_r_data;
 
-    // VGA Pixel Mapper RGB Wires
-    wire [3:0] mapper_vga_r;
-    wire [3:0] mapper_vga_g;
-    wire [3:0] mapper_vga_b;
-
     // Streamer internal wires
-    wire       frame_ready   = 1'b1; // Auto-trigger or bus-driven
-    wire       frame_ack;
+    wire       frame_ready;
     wire       frame_done;
     wire [7:0] base_addr     = 8'h00;
     wire       buffer_sel    = 1'b0;
@@ -136,9 +131,9 @@ module graphics_top(
         .buffer_sel    (buffer_sel),
         .vram_r_data   (vram_r_data),
         .vram_r_addr   (vram_r_addr),
-        .vga_r         (mapper_vga_r),
-        .vga_g         (mapper_vga_g),
-        .vga_b         (mapper_vga_b)
+        .vga_r         (vga_r),
+        .vga_g         (vga_g),
+        .vga_b         (vga_b)
     );
 
     // 6. Graphics Streamer (DMA Transfer Engine)
@@ -148,7 +143,6 @@ module graphics_top(
         .format_active  (format_active),
         .format_ID      (format_ID),
         .frame_ready    (frame_ready),
-        .frame_ack      (frame_ack),
         .frame_done     (frame_done),
         .base_addr      (base_addr),
         .sys_ram_r_addr (ram_addr),     // Connects to top-level RAM ADDR port
@@ -157,10 +151,19 @@ module graphics_top(
         .vram_w_addr    (vram_w_addr),
         .vram_w_data    (vram_w_data)
     );
-
-    // Drive physical VGA output pins
-    assign vga_r = mapper_vga_r;
-    assign vga_g = mapper_vga_g;
-    assign vga_b = mapper_vga_b;
+    
+    // 7. Memory Interface (Handling SRAM calls)
+    memory_interface memory_interface(
+    .clk_sys            (clk),
+    .rst                (rst),
+    .port_read_data     (sram_read_data),
+    .port_write_data    (sram_write_data),
+    .port_addr          (sram_addr),
+    .port_we            (sram_we),
+    .frame_done         (frame_done),
+    .format_ID          (format_ID),
+    .base_addr          (base_addr),
+    .frame_ready        (frame_ready)
+);
         
 endmodule

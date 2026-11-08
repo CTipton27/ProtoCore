@@ -21,17 +21,17 @@ module mem_bus(
     
     output [15:0] mmio_led,
     
-    // Error outputs exposed so you don't have to wire them yet (can leave floating at top level)
+    // Error outputs exposed
     output sys_write_error_cpu,
     output sys_write_error_ext
 );
     wire [7:0] ram_read_cpu, ram_read_ext;
     wire [7:0] sys_read_data_cpu;
     wire [7:0] sys_read_data_ext;
-    wire [8:0] unused_uart_status;
+    wire [7:0] unused_uart_status;
     
     // Private RAM (Exclusive CPU write, Port B read)
-    ram ram_inst(
+    ram ram(
         .clk(clk_cpu),
         .addr_cpu(cpu_addr),
         .addr_b(ram_addr_ext),
@@ -42,7 +42,7 @@ module mem_bus(
     );
     
     // System RAM / MMIO space (Shared dual-port with error detection)
-    sys_mem sys_mem_inst(
+    sys_mem sys_mem(
         .clk(clk_sys),
         .rst(rst),
     

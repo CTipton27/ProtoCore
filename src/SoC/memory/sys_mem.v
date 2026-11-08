@@ -21,7 +21,7 @@ module sys_mem(
     
     output [15:0] mmio_led,
     
-    output [8:0] uart_status
+    output [7:0] uart_status
 );
     reg [7:0] mem [0:255];
 
@@ -35,8 +35,8 @@ module sys_mem(
     reg write_b_last;
 
     // Default assignment for uart_status if driven elsewhere, 
-    // or connect it to your UART module instantiation as needed.
-    assign uart_status = 9'b0; 
+    // or connect it to UART module instantiation as needed.
+    assign uart_status = 8'b0; 
 
     always @(posedge clk) begin
         if (rst) begin

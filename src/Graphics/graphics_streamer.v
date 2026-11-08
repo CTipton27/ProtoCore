@@ -10,7 +10,6 @@ module graphics_streamer(
     input format_active,
     input [2:0] format_ID,
     input frame_ready,          // Triggered to start transfer
-    output frame_ack,           // Acknowledges start to CPU
     output frame_done,          // Pulses high for 1 cycle when full frame is written
     input [7:0] base_addr,      // VRAM target base address offset
     
@@ -32,7 +31,6 @@ module graphics_streamer(
 
     reg [1:0] r_state;
     reg [7:0] r_index;
-    reg       r_frame_ack;
     reg       r_frame_done;
     reg       r_vram_we;
     reg [7:0] r_sys_ram_r_addr;
@@ -48,7 +46,6 @@ module graphics_streamer(
         if (rst) begin
             r_state          <= S_IDLE;
             r_index          <= 8'd0;
-            r_frame_ack      <= 1'b0;
             r_frame_done     <= 1'b0;
             r_vram_we        <= 1'b0;
             r_sys_ram_r_addr <= 8'd0;
@@ -58,14 +55,11 @@ module graphics_streamer(
 
             case (r_state)
                 S_IDLE: begin
-                    r_vram_we   <= 1'b0;
-                    r_index     <= 8'd0;
-                    if (frame_ready && !r_frame_ack) begin
-                        r_frame_ack      <= 1'b1;
+                    r_vram_we        <= 1'b0;
+                    r_index          <= 8'd0;
+                    if (frame_ready) begin
                         r_sys_ram_r_addr <= base_addr;
                         r_state          <= S_READ;
-                    end else if (!frame_ready) begin
-                        r_frame_ack      <= 1'b0;
                     end
                 end
 
@@ -97,7 +91,6 @@ module graphics_streamer(
         end
     end
 
-    assign frame_ack      = r_frame_ack;
     assign frame_done     = r_frame_done;
     assign sys_ram_r_addr = r_sys_ram_r_addr;
     assign vram_we        = r_vram_we;
