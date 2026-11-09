@@ -19,10 +19,9 @@ module sys_mem(
     output reg write_error_a,
     output reg write_error_b,
     
-    output [15:0] mmio_led,
-    
-    output [7:0] uart_status
+    output [15:0] mmio_led
 );
+
     reg [7:0] mem [0:255];
 
     reg [7:0] data_a_last;
@@ -34,30 +33,35 @@ module sys_mem(
     reg write_a_last;
     reg write_b_last;
 
-    // Default assignment for uart_status if driven elsewhere, 
-    // or connect it to UART module instantiation as needed.
-    assign uart_status = 8'b0; 
+    // 16-bit LED Staging & Pending Registers (Atomic 8-bit to 16-bit bridge)
+    reg [7:0]  led_low_staging;
+    reg        half_word_pending;
+    reg [15:0] mmio_led_reg;
 
     always @(posedge clk) begin
         if (rst) begin
-            write_error_a <= 1'b0;
-            write_error_b <= 1'b0;
+            write_error_a     <= 1'b0;
+            write_error_b     <= 1'b0;
 
-            data_a_last   <= 8'b0;
-            data_b_last   <= 8'b0;
+            data_a_last       <= 8'h0;
+            data_b_last       <= 8'h0;
 
-            addr_a_last   <= 8'b0;
-            addr_b_last   <= 8'b0;
+            addr_a_last       <= 8'h0;
+            addr_b_last       <= 8'h0;
 
-            write_a_last  <= 1'b0;
-            write_b_last  <= 1'b0;
+            write_a_last      <= 1'b0;
+            write_b_last      <= 1'b0;
+
+            led_low_staging   <= 8'h00;
+            half_word_pending <= 1'b0;
+            mmio_led_reg      <= 16'h0000;
         end 
         else begin
-            // Default error flags to 0 each cycle (remove if you want errors to stick until reset)
+            // Default error flags to 0 each cycle
             write_error_a <= 1'b0;
             write_error_b <= 1'b0;
 
-            // Default updates for last-state trackers to prevent latches
+            // Default updates for last-state trackers
             write_a_last  <= write_en_a;
             write_b_last  <= write_en_b;
             
@@ -76,11 +80,26 @@ module sys_mem(
                 write_error_b <= 1'b1;
             end
             else begin
-                // Port A write
+                // Port A write (CPU)
                 if (write_en_a) begin
                     case (addr_a)
                         `MMIO_UART_RX:  
                             write_error_a <= 1'b1;
+                            
+                        `MMIO_LED_LO: begin
+                            mem[addr_a]       <= write_data_a; // Write to memory for read-back
+                            led_low_staging   <= write_data_a;
+                            half_word_pending <= 1'b1;
+                        end
+                        
+                        `MMIO_LED_HI: begin
+                            mem[addr_a]       <= write_data_a; // Write to memory for read-back
+                            if (half_word_pending) begin
+                                mmio_led_reg      <= {write_data_a, led_low_staging}; // Atomic commit to LEDs
+                                half_word_pending <= 1'b0;
+                            end
+                        end
+                        
                         default: begin  
                             if (!write_a_last || (addr_a != addr_a_last) || (write_data_a != data_a_last)) begin
                                 mem[addr_a] <= write_data_a;
@@ -89,7 +108,7 @@ module sys_mem(
                     endcase         
                 end
 
-                // Port B write
+                // Port B write (Streamer / External Master)
                 if (write_en_b) begin
                     case (addr_b)
                         `MMIO_UART_TX:  
@@ -105,12 +124,12 @@ module sys_mem(
         end
     end
 
-    // 0-cycle asynchronous read logic (inferred as Distributed RAM / LUTRAM)
+    // 0-cycle asynchronous read logic
     always @(*) begin
         read_data_a = mem[addr_a];
         read_data_b = mem[addr_b];
     end
     
-    assign mmio_led = {mem[`MMIO_LED_LO], mem[`MMIO_LED_HI]};
+    assign mmio_led = mmio_led_reg;
 
 endmodule

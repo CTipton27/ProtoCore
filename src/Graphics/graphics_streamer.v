@@ -14,8 +14,8 @@ module graphics_streamer(
     input [7:0] base_addr,      // VRAM target base address offset
     
     // System RAM Read Interface
-    output [7:0] sys_ram_r_addr,
-    input [7:0] sys_ram_r_data,
+    output [7:0] ram_read_addr,
+    input [7:0] ram_read_data,
     
     // Local VRAM Write Interface
     output vram_we,
@@ -33,7 +33,7 @@ module graphics_streamer(
     reg [7:0] r_index;
     reg       r_frame_done;
     reg       r_vram_we;
-    reg [7:0] r_sys_ram_r_addr;
+    reg [7:0] r_ram_read_addr;
 
     // Tier 1 formats are 128 bytes (0 to 127), Tier 2 formats are 256 bytes (0 to 255)
     wire is_tier1 = (format_ID == `FMT_32x32_1BPP) || 
@@ -48,7 +48,7 @@ module graphics_streamer(
             r_index          <= 8'd0;
             r_frame_done     <= 1'b0;
             r_vram_we        <= 1'b0;
-            r_sys_ram_r_addr <= 8'd0;
+            r_ram_read_addr <= 8'd0;
         end else begin
             // Default pulse clear for frame_done
             r_frame_done <= 1'b0;
@@ -58,14 +58,14 @@ module graphics_streamer(
                     r_vram_we        <= 1'b0;
                     r_index          <= 8'd0;
                     if (frame_ready) begin
-                        r_sys_ram_r_addr <= base_addr;
+                        r_ram_read_addr <= base_addr;
                         r_state          <= S_READ;
                     end
                 end
 
                 S_READ: begin
                     r_vram_we        <= 1'b0;
-                    r_sys_ram_r_addr <= base_addr + r_index;
+                    r_ram_read_addr <= base_addr + r_index;
                     r_state          <= S_WAIT;
                 end
 
@@ -92,9 +92,9 @@ module graphics_streamer(
     end
 
     assign frame_done     = r_frame_done;
-    assign sys_ram_r_addr = r_sys_ram_r_addr;
+    assign ram_read_addr = r_ram_read_addr;
     assign vram_we        = r_vram_we;
     assign vram_w_addr    = base_addr + r_index;
-    assign vram_w_data    = sys_ram_r_data;
+    assign vram_w_data    = ram_read_data;
 
 endmodule

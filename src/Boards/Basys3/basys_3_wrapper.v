@@ -11,7 +11,14 @@ module basys_3_wrapper(
     output UART_tx,
     output [15:0] led,
     output [6:0] seg,
-    output [3:0] an
+    output [3:0] an,
+    
+    // Physical VGA Outputs
+    output vga_hsync,
+    output vga_vsync,
+    output [3:0] vga_r,
+    output [3:0] vga_g,
+    output [3:0] vga_b
     );
     
     //------------------------------
@@ -19,7 +26,6 @@ module basys_3_wrapper(
     //------------------------------
     wire clk_cpu;
     wire s_clk;
-    
     
     //------------------------------
     // CPU / SOC signals
@@ -31,7 +37,17 @@ module basys_3_wrapper(
     wire reset_pc_req;
     wire reset_pc_ack;
     
+    // MMIO Control Bus Wires
+    wire [7:0] ram_ext_addr;
+    wire ram_ext_write_en;
+    wire [7:0] ram_ext_write_data;
+    wire [7:0] ram_ext_read_data;
+    wire ram_ext_mode_select;    
     
+    // Dedicated Streamer Read Port Wires (RAM Port B)
+    wire [7:0] streamer_addr;
+    wire [7:0] streamer_read_data;
+
     //------------------------------
     // IRAM interface
     //------------------------------
@@ -39,8 +55,6 @@ module basys_3_wrapper(
     wire [23:0] iram_write_data;
     wire [7:0] iram_write_addr;
     wire iram_packet_ack;
-    
-    
     
     //------------------------------
     // Debug Signals
@@ -51,8 +65,6 @@ module basys_3_wrapper(
     wire [7:0] ra_data; 
     wire [7:0] rb_data;
     wire [23:0] cpu_instruction;
-    
-    
     
     //------------------------------
     // UART Signals
@@ -69,14 +81,12 @@ module basys_3_wrapper(
     wire inst_byte_ack;
     wire [7:0] inst_byte;
     
-    
     //------------------------------
     // User IO
     //------------------------------
     wire [15:0] mmio_display;
     reg [15:0] output_reg;
     wire display_regs;
-    
     
     //------------------------------
     // SOC
@@ -92,17 +102,28 @@ module basys_3_wrapper(
         .iram_write_data(iram_write_data),
         .iram_write_addr(iram_write_addr),
         
+        // Dedicated Streamer Read Port (RAM Port B)
+        .streamer_addr(streamer_addr),
+        .streamer_read_data(streamer_read_data),
+
+        // MMIO / External Control Bus (Sys_Mem Port B)
+        .ext_addr(ram_ext_addr),
+        .ext_write_en(ram_ext_write_en),
+        .ext_write_data(ram_ext_write_data),
+        .ext_read_data(ram_ext_read_data),
+        .ext_mode_select(ram_ext_mode_select),
+        
         .cpu_ra_data(ra_data),
         .cpu_rb_data(rb_data),
         .cpu_data_out(cpu_data_out),
         .cpu_instruction(cpu_instruction),
         .pc_addr_out(pc_addr),
         .cpu_halted(cpu_halted),
+        
         .iram_packet_ack(iram_packet_ack),
-        .mmio_data(mmio_display),
+        .mmio_led(mmio_display),
         .reset_pc_ack(reset_pc_ack)
     );
-    
     
     //------------------------------
     // INSTRUCTION PROGRAMMING
@@ -125,8 +146,32 @@ module basys_3_wrapper(
         .clear_halt(clear_halt)
     );
     
-
-    
+    //------------------------------
+    // GRAPHICS
+    //------------------------------
+    graphics_top graphics_top(
+        .clk(clk_system),
+        .rst(hard_rst),
+        
+        // Two 8-lane Data Ports
+        .ram_read_data(streamer_read_data),     // Streamer data from private RAM Port B
+        .sram_read_data(ram_ext_read_data),   // MMIO read data from sys_mem Port B
+        .sram_write_data(ram_ext_write_data), // MMIO write data
+        
+        // Two 8-lane Address Ports
+        .ram_addr(streamer_addr),       // Streamer address to private RAM Port B
+        .sram_addr(ram_ext_addr),       // MMIO address to sys_mem Port B
+        
+        // SRAM Control
+        .sram_we(ram_ext_write_en),     // MMIO write enable
+        
+        // VGA Outputs
+        .vga_hsync(vga_hsync),
+        .vga_vsync(vga_vsync),
+        .vga_r(vga_r),
+        .vga_g(vga_g),
+        .vga_b(vga_b)
+    );
     
     //------------------------------
     // UART RX
@@ -161,11 +206,9 @@ module basys_3_wrapper(
         .uart_byte_ack(uart_byte_ack)
     );    
     
-    
     //------------------------------
     // UART TX
     //------------------------------
-    
     uart_tx uart_tx(
         .clk(clk_system),
         .rst(hard_rst),
@@ -194,7 +237,6 @@ module basys_3_wrapper(
         .clk_cpu(clk_cpu),
         .send_debug_packet(send_debug_packet)
     );
-    
     
     //------------------------------
     // IO

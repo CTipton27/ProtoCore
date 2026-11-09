@@ -12,9 +12,10 @@ module cpu_core(
 
     input  [7:0] mem_read_data,
     output [7:0] mem_write_data,
-    output [8:0] mem_addr,
+    output [7:0] mem_addr,
     output mem_write_enable,
     output mem_read_enable,
+    output mem_mode_select,
 
     output [7:0] register_a_data,
     output [7:0] register_b_data,
@@ -32,8 +33,6 @@ module cpu_core(
 
     wire reg_write_enable, mem_write_request, mem_read_request;
     wire [3:0] ra_addr, rb_addr, rd_addr;
-    wire mem_space;
-    wire [7:0] data_addr;
 
     wire alu_src_immediate, alu_zero, alu_carry;
     wire [2:0] alu_opcode;
@@ -57,11 +56,11 @@ module cpu_core(
         .rb_addr(rb_addr),
         .alu_opcode(alu_opcode),
         .alu_src_immediate(alu_src_immediate),
-        .data_write_enable(mem_write_request),
-        .data_read_enable(mem_read_request),
+        .mem_write_enable(mem_write_request),
+        .mem_read_enable(mem_read_request),
         .pc_select(pc_select),
         .halt_detect(halt_detect),
-        .mem_space(mem_space),
+        .mem_space(mem_mode_select),
         .imm_value(imm_value)
     );
 
@@ -79,7 +78,7 @@ module cpu_core(
         .rb_addr(rb_addr),
         .reg_a_data(register_a_data),
         .reg_b_data(register_b_data),
-        .alu_out(data_addr),
+        .alu_out(mem_addr),
         .alu_zero(alu_zero),
         .alu_carry(alu_carry)
     );
@@ -149,10 +148,9 @@ module cpu_core(
         end
     end
         
-    assign mem_write_data = register_b_data;
+    assign mem_write_data = halt_state_reg ? halt_code : register_b_data;
     assign halt_state = halt_state_reg;
     assign mem_write_enable = mem_write_request && cpu_enable && !halt_state_reg;
     assign mem_read_enable = mem_read_request && cpu_enable && !halt_state_reg;
     assign reset_pc_ack = reset_pc_req && pc_load_ack;
-    assign mem_addr = {mem_space, data_addr};
 endmodule

@@ -3,12 +3,12 @@
 // FILE: graphics_top.v
 
 module graphics_top(
-    input  wire       clk,             // Master system clock (100 MHz)
-    input  wire       rst,             // System reset
+    input  wire        clk,               // Master system clock (100 MHz)
+    input  wire        rst,               // System reset
     
     // Two 8-lane Data Ports
-    input  wire [7:0] ram_r_data,      // RAM READ DATA (from system RAM for streamer)
-    input  wire [7:0] sram_read_data,  // INPUT SRAM_DATA (VRAM bus)
+    input  wire [7:0] ram_read_data,      // RAM READ DATA (from system RAM for streamer)
+    input  wire [7:0] sram_read_data,   // INPUT SRAM_DATA (VRAM bus)
     output wire [7:0] sram_write_data, // OUTPUT SRAM_DATA (VRAM bus)
     
     // Two 8-lane Address Ports
@@ -16,11 +16,11 @@ module graphics_top(
     output wire [7:0] sram_addr,       // SRAM ADDR (VRAM / SRAM address)
     
     // SRAM Control
-    output wire       sram_we,         // SRAM WE (Write Enable)
+    output wire        sram_we,          // SRAM WE (Write Enable)
     
     // VGA Outputs
-    output wire       vga_hsync,
-    output wire       vga_vsync,
+    output wire        vga_hsync,
+    output wire        vga_vsync,
     output wire [3:0] vga_r,
     output wire [3:0] vga_g,
     output wire [3:0] vga_b
@@ -34,14 +34,13 @@ module graphics_top(
     wire [9:0] pixel_y;
     wire       video_on;
 
-    // Format Decoder Wires (Hardcoded or defaulted for now, or tied to control bits)
-    // Assuming default format or driven via SRAM bus if applicable
-    wire [2:0] format_ID   = 3'h0; // Default or register-driven
-    wire       format_active = 1'b0;
-    wire       offset_x    = 1'b0;
-    wire       offset_y    = 1'b0;
-    wire [1:0] scale       = 2'b00;           // x10 scale
-    wire [1:0] color_depth = 2'b00;           // 1BPP
+    // Format Decoder Wires (Driven exclusively by format_decoder)
+    wire [2:0] format_ID;
+    wire       format_active;
+    wire       offset_x;
+    wire       offset_y;
+    wire [1:0] scale;
+    wire [1:0] color_depth;
     
     // Internal VRAM Interconnect Wires
     wire       vram_we;
@@ -50,11 +49,11 @@ module graphics_top(
     wire [7:0] vram_r_addr;
     wire [7:0] vram_r_data;
 
-    // Streamer internal wires
+    // Streamer internal wires (base_addr and format_ID are driven by memory_interface)
     wire       frame_ready;
     wire       frame_done;
-    wire [7:0] base_addr     = 8'h00;
-    wire       buffer_sel    = 1'b0;
+    wire [7:0] base_addr;
+    wire       buffer_sel = 1'b0;
 
     // Gating Control Latch
     reg        frame_valid;
@@ -68,16 +67,6 @@ module graphics_top(
         end
     end
 
-    // Bidirectional Inout handling for SRAM data bus
-    // Streamer or external master writes to VRAM when vram_we is active
-    assign sram_data = vram_we ? vram_w_data : 8'hz;
-    assign vram_w_data = sram_data;
-
-    // Connect SRAM address and write enable to top-level ports
-    assign sram_addr = vram_w_addr; // Or multiplexed with read address if needed
-    assign sram_we   = vram_we;
-
-
     // 1. Pixel Clock Generator (100MHz -> ~25MHz)
     vga_clock_gen vga_clock_gen(
         .clk_100mhz (clk),
@@ -87,12 +76,12 @@ module graphics_top(
         
     // 2. VGA Timing Generator
     vga_timing vga_timing (
-        .clk_25m    (clk_vga),       
-        .rst        (rst),               
-        .vga_hsync  (vga_hsync),   
-        .vga_vsync  (vga_vsync),   
-        .pixel_x    (pixel_x),       
-        .pixel_y    (pixel_y),       
+        .clk_25m    (clk_vga),        
+        .rst        (rst),                    
+        .vga_hsync  (vga_hsync),    
+        .vga_vsync  (vga_vsync),    
+        .pixel_x    (pixel_x),        
+        .pixel_y    (pixel_y),        
         .video_on   (video_on)      
     );
         
@@ -102,7 +91,7 @@ module graphics_top(
         .format_active (format_active),
         .offset_x      (offset_x),
         .offset_y      (offset_y),
-        .scale         (scale),           
+        .scale         (scale),            
         .color_depth   (color_depth)
     );
         
@@ -145,8 +134,8 @@ module graphics_top(
         .frame_ready    (frame_ready),
         .frame_done     (frame_done),
         .base_addr      (base_addr),
-        .sys_ram_r_addr (ram_addr),     // Connects to top-level RAM ADDR port
-        .sys_ram_r_data (ram_r_data),   // Connects to top-level RAM READ DATA port
+        .ram_read_addr  (ram_addr),      // Connects to top-level RAM ADDR port
+        .ram_read_data  (ram_read_data),   // Connects to top-level RAM READ DATA port
         .vram_we        (vram_we),
         .vram_w_addr    (vram_w_addr),
         .vram_w_data    (vram_w_data)
@@ -154,16 +143,16 @@ module graphics_top(
     
     // 7. Memory Interface (Handling SRAM calls)
     memory_interface memory_interface(
-    .clk_sys            (clk),
-    .rst                (rst),
-    .port_read_data     (sram_read_data),
-    .port_write_data    (sram_write_data),
-    .port_addr          (sram_addr),
-    .port_we            (sram_we),
-    .frame_done         (frame_done),
-    .format_ID          (format_ID),
-    .base_addr          (base_addr),
-    .frame_ready        (frame_ready)
-);
+        .clk_sys             (clk),
+        .rst                 (rst),
+        .port_read_data      (sram_read_data),
+        .port_write_data     (sram_write_data),
+        .port_addr           (sram_addr),
+        .port_we             (sram_we),
+        .frame_done          (frame_done),
+        .format_ID           (format_ID),
+        .base_addr           (base_addr),
+        .frame_ready         (frame_ready)
+    );
         
 endmodule
