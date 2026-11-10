@@ -27,7 +27,6 @@ formats = {
     "HALT":  {"format":["imm"],           "opcode":"1111"},
 }
 
-
 expansions = {
     # Pseudoinstructions
     "NOP": [["ADD", "R0", "R0", "R0"]],
@@ -42,22 +41,19 @@ expansions = {
     "LDI": [["ADDI", "{0}", "R0", "{1}"]],
     "JMPA": [["JMP", "R0", "{0}"]],
 
-    #macros
+    # Macros
     "NOR": [
         ["OR", "{0}", "{1}", "{2}"],
         ["NOT", "{0}", "{0}"]
     ],
-
     "NAND": [
         ["AND", "{0}", "{1}", "{2}"],
         ["NOT", "{0}", "{0}"]
     ],
-
     "XNOR": [
         ["XOR", "{0}", "{1}", "{2}"],
         ["NOT", "{0}", "{0}"]
     ],
-
     "SWAP": [
         ["XOR", "{0}", "{1}", "{0}"],
         ["XOR", "{1}", "{0}", "{1}"],
@@ -78,11 +74,13 @@ def reg_to_bin(reg):
 def imm_to_bin(val):
     val = int(val)
 
-    if not (-128 <= val <= 127):
-        raise ValueError(f"Immediate out of range ({val})")
-
+    # Handle negative numbers (two's complement in 8 bits)
     if val < 0:
-        val = (1 << 8) + val
+        val = val & 0xFF
+
+    # Validate that it fits in an 8-bit field (0 to 255)
+    if not (0 <= val <= 255):
+        raise ValueError(f"Immediate out of range ({val})")
 
     return f"{val:08b}"
 
@@ -92,12 +90,10 @@ def expand_instruction(tokens):
 
     if mnemonic in expansions:
         templates = expansions[mnemonic]
-
     else:
         return [tokens]
 
     expanded = []
-
     for instruction in templates:
         expanded.append(
             [field.format(*operands) for field in instruction]
@@ -110,13 +106,32 @@ def expand_instruction(tokens):
 # ----------------------------
 
 labels = {}
-constants = {}
+constants = {
+    # MMIO registers
+    "MMIO_LED_LO" : "0x0100",
+    "MMIO_LED_HI" : "0x0101",
+    "MMIO_UART_RX": "0x0102",
+    "MMIO_UART_TX": "0x0103",
+    "MMIO_UART_ST": "0x0104",
+    "MMIO_GPHC_ST": "0x0105",
+    "MMIO_VRAM_AD": "0x0106",
+
+    # Formats with Trigger (Bit 7 = 1) + Format (Bits 6:4 = 1-7)
+    # Layout: 1XXX 0000 (Binary) -> Hex values 0x80 to 0x70 shifted
+    "FMT_OFF"       : "0x00",  # 0000 0000
+    "FMT_32x32_1BPP": "0x90",  # 1001 0000 (Trigger + Format 1)
+    "FMT_32x16_2BPP": "0xA0",  # 1010 0000 (Trigger + Format 2)
+    "FMT_16x16_4BPP": "0xB0",  # 1011 0000 (Trigger + Format 3)
+    "FMT_64x32_1BPP": "0xC0",  # 1100 0000 (Trigger + Format 4)
+    "FMT_32x32_2BPP": "0xD0",  # 1101 0000 (Trigger + Format 5)
+    "FMT_32x16_4BPP": "0xE0",  # 1110 0000 (Trigger + Format 6)
+    "FMT_16x16_8BPP": "0xF0",  # 1111 0000 (Trigger + Format 7)
+}
 program = []
 
 pc = 0
 
 with open(assembly_src) as src:
-
     for line in src:
         # Remove all comments
         line = line.split(";")[0].strip()
@@ -142,30 +157,24 @@ with open(assembly_src) as src:
                 raise ValueError(f"Duplicate label '{label}'")
 
             labels[label] = pc
-
             line = remainder.strip()
 
         # If there's still text, it's an instruction, tokenize it and continue.
         if line:
             tokens = [t for t in re.split(r"[,\s]+", line) if t]
-
             expanded = expand_instruction(tokens)
-
             program.extend(expanded)
             pc += len(expanded)
-
 
 # ----------------------------
 # PASS 2
 # ----------------------------
 
 with open(mem_src, "w") as mem:
-
     for pc, tokens in enumerate(program):
-
         mnemonic = tokens[0]
 
-        #ensure all commands are valid
+        # Ensure all commands are valid
         if mnemonic not in formats:
             raise ValueError(f"Unknown instruction '{mnemonic}'")
 
@@ -182,6 +191,30 @@ with open(mem_src, "w") as mem:
         if len(operands) != len(expected):
             raise ValueError(f"{mnemonic}: wrong number of operands")
 
+        # 1. First pass over operands to resolve immediate/address for mem_space check
+        mem_space = 0
+        for operand_type, operand in zip(expected, operands):
+            if operand in constants:
+                operand = constants[operand]
+
+            if operand_type == "imm":
+                if operand in labels:
+                    val_check = labels[operand]
+                    if formats[mnemonic].get("pc_relative", False):
+                        val_check -= (pc + 1)
+                else:
+                    val_check = operand
+
+                try:
+                    int_val = int(str(val_check), 0)
+                except ValueError:
+                    int_val = 0
+
+                # Logical addresses >= 256 (0x0100) set mem_space = 1
+                if int_val >= 0x0100:
+                    mem_space = 1
+
+        # 2. Standard operand encoding
         for operand_type, operand in zip(expected, operands):
             # Register Aliasing
             if operand in constants:
@@ -189,27 +222,33 @@ with open(mem_src, "w") as mem:
 
             if operand_type == "rd":
                 rd_bin = reg_to_bin(operand)
-
             elif operand_type == "ra":
                 ra_bin = reg_to_bin(operand)
-
             elif operand_type == "rb":
                 rb_bin = reg_to_bin(operand)
-
-
             elif operand_type == "imm":
                 if operand in labels:
                     value = labels[operand]
-
                     if formats[mnemonic].get("pc_relative", False):
                         value -= (pc + 1)
-
                 elif operand in constants:
                     value = constants[operand]
-
                 else:
                     value = operand
 
+                # Mask memory addresses/immediates to lower 8 bits for physical offset
+                if mnemonic in ["LOAD", "STORE"]:
+                    numeric_val = int(str(value), 0)
+                    value = numeric_val & 0xFF
+
                 imm_bin = imm_to_bin(value)
+
+        # 3. Inject mem_space attribute bit into unused register fields for LOAD/STORE
+        if mnemonic == "STORE":
+            # STORE uses rd slot's LSB (instruction[16]) for mem_space
+            rd_bin = f"000{mem_space}"
+        elif mnemonic == "LOAD":
+            # LOAD uses rb slot's LSB (instruction[8]) for mem_space
+            rb_bin = f"000{mem_space}"
 
         mem.write(f"{opcode}{rd_bin}{ra_bin}{rb_bin}{imm_bin}\n")
