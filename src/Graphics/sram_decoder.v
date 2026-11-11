@@ -49,8 +49,8 @@ module memory_interface(
             case (r_state)
                 S_IDLE: begin
                     port_addr <= `MMIO_GPHC_ST;
-                    // Check if CPU triggered the handshake (Bit 7 dropped to 0)
-                    if (port_read_data[7] == 1'b0) begin
+                    // Check if CPU triggered the handshake (Bit 7 high)
+                    if (port_read_data[7] == 1'b1) begin
                         r_format_ID <= port_read_data[6:4];
                         port_addr   <= `MMIO_VRAM_AD; // Request base address next cycle
                         r_state     <= S_FETCH_AD;
@@ -78,8 +78,8 @@ module memory_interface(
                 end
                 
                 S_RELEASE: begin
-                    // Flip Bit 7 back to 1 while preserving lower status bits
-                    port_write_data <= {1'b1, port_read_data[6:0]};
+                    // Flip Bit 7 back to 0 while preserving lower status bits
+                    port_write_data <= {1'b0, port_read_data[6:0]};
                     port_we         <= 1'b1;
                     r_state         <= S_DONE_WRITE;
                 end

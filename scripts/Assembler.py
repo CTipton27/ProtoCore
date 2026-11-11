@@ -72,7 +72,15 @@ def reg_to_bin(reg):
     return f"{num:04b}"
 
 def imm_to_bin(val):
-    val = int(val)
+    if isinstance(val, str):
+        val_str = val.strip()
+        # Handle explicit unsigned prefix 'u' or 'U' (e.g., "u255", "u0xFF")
+        if val_str.lower().startswith('u'):
+            val = int(val_str[1:], 0)
+        else:
+            val = int(val_str, 0)
+    else:
+        val = int(val)
 
     # Handle negative numbers (two's complement in 8 bits)
     if val < 0:

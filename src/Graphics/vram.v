@@ -17,6 +17,12 @@ module vram (
     // 256 bytes of local VRAM storage
     reg [7:0] mem [0:255];
 
+
+    integer i;
+    initial begin
+        for (i = 0; i < 256; i = i+1)
+            mem[i] = 8'h00; //initialize values to 0
+    end
     // Synchronous Write
     always @(posedge clk) begin
         if (we) begin

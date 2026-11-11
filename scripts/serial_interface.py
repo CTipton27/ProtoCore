@@ -2,16 +2,13 @@ import serial
 import serial.tools.list_ports
 import time
 
-
 BAUD = 115200
-
 
 def send_cmd(ser, data, description):
     """Send a command byte sequence with a small delay."""
     ser.write(bytes(data))
     time.sleep(0.005)
     print(f"Sent: {' '.join(f'0x{x:02X}' for x in data)} - {description}")
-
 
 ports = list(serial.tools.list_ports.comports())
 
@@ -25,7 +22,6 @@ for i, p in enumerate(ports):
 
 port_choice = int(input("Select port: "))
 port = ports[port_choice].device
-
 
 try:
     with serial.Serial(port, BAUD, timeout=1) as ser:
@@ -44,56 +40,28 @@ try:
             cmd = input("> ").strip().lower()
 
             if cmd == "1":
-                send_cmd(
-                    ser,
-                    [0xF4],
-                    "MMIO display mode"
-                )
+                # 3rd byte is 0xF4 (MMIO display)
+                send_cmd(ser, [0x00, 0x00, 0xF4], "MMIO display mode")
 
             elif cmd == "2":
-                send_cmd(
-                    ser,
-                    [0xF5],
-                    "Register display mode"
-                )
+                # 3rd byte is 0xF5 (Register display) [Comma fixed here]
+                send_cmd(ser, [0x00, 0x00, 0xF5], "Register display mode")
 
             elif cmd == "3":
-                send_cmd(
-                    ser,
-                    [0xF6],
-                    "Debug command"
-                )
-                send_cmd(
-                    ser,
-                    [0x01],
-                    "Enter debug mode"
-                )
+                # 3rd byte is 0xF6 (Debug mode), byte 2 carries argument 0x01 (Enable)
+                send_cmd(ser, [0x00, 0x01, 0xF6], "Enter debug mode")
 
             elif cmd == "4":
-                send_cmd(
-                    ser,
-                    [0xF6],
-                    "Debug command"
-                )
-                send_cmd(
-                    ser,
-                    [0x00],
-                    "Exit debug mode"
-                )
+                # 3rd byte is 0xF6 (Debug mode), byte 2 carries argument 0x00 (Disable)
+                send_cmd(ser, [0x00, 0x00, 0xF6], "Exit debug mode")
 
             elif cmd == "5":
-                send_cmd(
-                    ser,
-                    [0xF7],
-                    "Reset PC"
-                )
+                # 3rd byte is 0xF7 (Reset PC)
+                send_cmd(ser, [0x00, 0x00, 0xF7], "Reset PC")
 
             elif cmd == "6" or cmd == "":
-                send_cmd(
-                    ser,
-                    [0xF8],
-                    "Step CPU"
-                )
+                # 3rd byte is 0xF8 (Step CPU)
+                send_cmd(ser, [0x00, 0x00, 0xF8], "Step CPU")
 
             elif cmd == "q":
                 print("Closing.")
@@ -101,7 +69,6 @@ try:
 
             else:
                 print("Unknown command.")
-
 
 except serial.SerialException as e:
     print(f"UART error: {e}")

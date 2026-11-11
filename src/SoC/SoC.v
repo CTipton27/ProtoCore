@@ -21,7 +21,6 @@ module soc(
     output ext_write_en,
     output [7:0] ext_write_data,
     input  [7:0] ext_read_data,
-    output ext_mode_select,
     
     // CPU Debug / Status Outputs
     output [7:0] cpu_ra_data,
@@ -46,6 +45,8 @@ module soc(
     wire cpu_write_enable;
     wire cpu_read_enable;
     wire cpu_mem_mode_select;
+    
+    wire ext_mode_select = 1'b1;
 
     // 1. CPU Core
     cpu_core cpu_core(

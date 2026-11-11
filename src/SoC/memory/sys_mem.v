@@ -38,6 +38,12 @@ module sys_mem(
     reg        half_word_pending;
     reg [15:0] mmio_led_reg;
 
+    integer i;
+    initial begin
+        for (i = 0; i < 256; i = i+1)
+            mem[i] = 8'h00; //initialize values to 0
+    end
+
     always @(posedge clk) begin
         if (rst) begin
             write_error_a     <= 1'b0;

@@ -19,6 +19,12 @@ module reg_file(
     assign read_data_a = (read_addr_a == 0) ? 8'b0 : regfile[read_addr_a];
     assign read_data_b = (read_addr_b == 0) ? 8'b0 : regfile[read_addr_b];
     
+    integer i;
+    initial begin
+        for (i = 0; i < 16; i = i+1)
+            regfile[i] = 8'h00; //initialize values to 0
+    end
+    
     always @(posedge clk) begin
     if (cpu_enable) begin
         if (write_addr == 0)

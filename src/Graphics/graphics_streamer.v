@@ -70,11 +70,12 @@ module graphics_streamer(
                 end
 
                 S_WAIT: begin
+                    r_vram_we        <= 1'b1;
                     r_state          <= S_WRITE;
                 end
 
                 S_WRITE: begin
-                    r_vram_we <= 1'b1;
+                    r_vram_we <= 1'b0;
                     if (r_index == max_index) begin
                         r_state      <= S_IDLE;
                         r_frame_done <= 1'b1; // Signal transfer complete

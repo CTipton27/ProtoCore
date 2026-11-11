@@ -29,7 +29,7 @@ module basys_3_wrapper(
     
     //------------------------------
     // CPU / SOC signals
-    //------------------------------   
+    //------------------------------    
     wire clear_halt;
     wire cpu_halted;
     wire [7:0] pc_addr;
@@ -42,7 +42,6 @@ module basys_3_wrapper(
     wire ram_ext_write_en;
     wire [7:0] ram_ext_write_data;
     wire [7:0] ram_ext_read_data;
-    wire ram_ext_mode_select;    
     
     // Dedicated Streamer Read Port Wires (RAM Port B)
     wire [7:0] streamer_addr;
@@ -77,9 +76,11 @@ module basys_3_wrapper(
     wire tx_busy;
     wire tx_send;
     wire send_debug_packet;
-    wire inst_byte_ready;
-    wire inst_byte_ack;
-    wire [7:0] inst_byte;
+    
+    // Updated Packet-Level Signals
+    wire inst_packet_ready;
+    wire inst_packet_ack;
+    wire [23:0] inst_packet;
     
     //------------------------------
     // User IO
@@ -111,7 +112,6 @@ module basys_3_wrapper(
         .ext_write_en(ram_ext_write_en),
         .ext_write_data(ram_ext_write_data),
         .ext_read_data(ram_ext_read_data),
-        .ext_mode_select(ram_ext_mode_select),
         
         .cpu_ra_data(ra_data),
         .cpu_rb_data(rb_data),
@@ -134,12 +134,12 @@ module basys_3_wrapper(
         .cpu_halted(cpu_halted),
         .programming_active(programming_active),
     
-        .inst_byte_ready(inst_byte_ready),
-        .inst_byte(inst_byte),
+        .inst_packet_ready(inst_packet_ready),
+        .inst_packet(inst_packet),
     
         .inst_write_ack(iram_packet_ack),
     
-        .inst_byte_ack(inst_byte_ack),
+        .inst_packet_ack(inst_packet_ack),
         .iRAM_write_enable(iram_write_enable),
         .extern_iRAM_addr(iram_write_addr),
         .iRAM_packet(iram_write_data),
@@ -154,7 +154,7 @@ module basys_3_wrapper(
         .rst(hard_rst),
         
         // Two 8-lane Data Ports
-        .ram_read_data(streamer_read_data),     // Streamer data from private RAM Port B
+        .ram_read_data(streamer_read_data),   // Streamer data from private RAM Port B
         .sram_read_data(ram_ext_read_data),   // MMIO read data from sys_mem Port B
         .sram_write_data(ram_ext_write_data), // MMIO write data
         
@@ -191,7 +191,7 @@ module basys_3_wrapper(
         .byte_ready(uart_byte_ready),
         .uart_byte(rx_byte),
         
-        .inst_byte_ack(inst_byte_ack),
+        .inst_packet_ack(inst_packet_ack),
         .reset_ack(reset_pc_ack),
         .step_ack(step_pc_ack),
         
@@ -200,8 +200,8 @@ module basys_3_wrapper(
         .reset_pc_req(reset_pc_req),
         .debug_mode(debug_mode),
         .step_cpu_req(step_cpu_req),
-        .inst_byte(inst_byte),
-        .inst_byte_ready(inst_byte_ready),
+        .inst_packet(inst_packet),
+        .inst_packet_ready(inst_packet_ready),
     
         .uart_byte_ack(uart_byte_ack)
     );    

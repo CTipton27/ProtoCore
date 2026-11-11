@@ -1,10 +1,5 @@
 `timescale 1ns / 1ps
-//FILE: rx_decoder
-
-/*
-After data is received from uart_rx module, it is transmitted here to be contextualized. It determines
-whether the incoming byte is data, system commands, program information, etc, and raises relevant signals.
-*/
+//FILE: rx_decoder.v
 
 module rx_decoder(
     input clk_system,
@@ -12,7 +7,7 @@ module rx_decoder(
     input byte_ready,
     input [7:0] uart_byte,
     
-    input inst_byte_ack,
+    input inst_packet_ack,
     input reset_ack,
     input step_ack,
     
@@ -21,12 +16,10 @@ module rx_decoder(
     output reg reset_pc_req,
     output reg debug_mode,
     output reg step_cpu_req,
-    output reg [7:0] inst_byte,
-    output reg inst_byte_ready,
-    
-    
+    output reg [23:0] inst_packet,
+    output reg inst_packet_ready,
     output reg uart_byte_ack
-    );
+);
     
     parameter [1:0] IDLE = 2'b00,
                     PROG = 2'b01,
@@ -36,8 +29,9 @@ module rx_decoder(
     reg debug_listen = 0;
     reg [1:0] byte_counter = 0;
     reg programming_active_reg;
+    reg [23:0] temp_packet = 24'b0;
     
-    always @(posedge clk_system) begin 
+    always @(posedge clk_system) begin  
         if (rst) begin
             state <= IDLE; 
             programming_active_reg <= 0;
@@ -46,181 +40,120 @@ module rx_decoder(
             debug_mode <= 0;
             step_cpu_req <= 0;
             byte_counter <= 0;
-            inst_byte <= 0;
-            inst_byte_ready <= 0;
+            inst_packet <= 0;
+            inst_packet_ready <= 0;
             uart_byte_ack <= 0;
-            //leave display unchanged even when resetting
+            temp_packet <= 0;
         end
         else begin
             if (reset_pc_req && reset_ack) begin
                 reset_pc_req <= 0;
                 programming_active_reg <= 0;
-                if (debug_mode)
-                    state <= DEBG;
-                else
-                    state <= IDLE;
-            end else
-            
-            if (step_cpu_req && step_ack)
+                state <= debug_mode ? DEBG : IDLE;
+            end 
+            else if (step_cpu_req && step_ack)
                 step_cpu_req <= 0;
-            else 
-            
-            if (inst_byte_ready && inst_byte_ack)
-                inst_byte_ready <= 0;
-            
-            else if (!inst_byte_ready) begin 
+            else if (inst_packet_ready && inst_packet_ack)
+                inst_packet_ready <= 0;
+            else if (!inst_packet_ready) begin 
                 if (byte_ready & !uart_byte_ack) begin
                     uart_byte_ack <= 1;
                     
                     case (state)
                         IDLE: begin
                             case (uart_byte)
-                                8'hF1: begin //begin program
+                                8'hF1: begin // Begin program stream
                                     state <= PROG;
                                     programming_active_reg <= 1;
                                     byte_counter <= 0;
                                 end
-                                
-                                8'hF4: begin //MMIO display
-                                    debug_display <= 0;
-                                end
-                                
-                                8'hF5: begin //REG display
-                                    debug_display <= 1;
-                                end
-                                
-                                8'hF6: begin //Debug Mode
+                                8'hF4: debug_display <= 0;
+                                8'hF5: debug_display <= 1;
+                                8'hF6: begin
                                     debug_listen <= 1;
                                     state <= DEBG;
                                 end
-                                
-                                8'hF7: begin //Reset
+                                8'hF7: begin
                                     if (!reset_pc_req)
                                         reset_pc_req <= 1; 
-                                end   
+                                end 
                                 default: begin end 
-                            endcase // uart_byte 
-                        end // IDLE state
+                            endcase
+                        end
                         
                         PROG: begin 
-                            if (byte_counter == 0) begin
-                                case (uart_byte)
-                                    8'hF2: begin //end, keep PC
-                                        programming_active_reg <= 0;
-                                        byte_counter <= 0;
-                                        if (debug_mode) 
-                                            state <= DEBG; 
-                                        else 
-                                            state <= IDLE;
-                                    end
+                            // Accumulate 3 bytes blindly into the window first
+                            case (byte_counter)
+                                2'd0: begin
+                                    temp_packet[7:0] <= uart_byte;
+                                    byte_counter <= 2'd1;
+                                end
+                                2'd1: begin
+                                    temp_packet[15:8] <= uart_byte;
+                                    byte_counter <= 2'd2;
+                                end
+                                2'd2: begin
+                                    temp_packet[23:16] <= uart_byte;
+                                    byte_counter <= 2'd0; // Reset counter for next window
                                     
-                                    8'hF3: begin  //end, reset PC
-                                        reset_pc_req <= 1;
-                                        byte_counter <= 0;
-                                        state <= PROG; // do not leave until reset is confirmed!
-                                    end
-                                    
-                                    8'hF4: begin //MMIO display
-                                        debug_display <= 0;
-                                        byte_counter <= 0;
-                                    end
-                                    
-                                    8'hF5: begin //REG display
-                                        debug_display <= 1;
-                                        byte_counter <= 0;
-                                    end
-                                    
-                                    8'hF6: begin //check DEBUG mode
-                                        debug_listen <= 1;
-                                        byte_counter <= 1;
-                                    end
-                                    
-                                    default: begin //instruction data
-                                        inst_byte <= uart_byte;
-                                        inst_byte_ready <= 1;
-                                        byte_counter <= 1;
-                                    end
-                                endcase //uart_byte
-                            end //byte_counter == 0 
-                            else if (byte_counter == 1) begin
-                                if (debug_listen) begin
+                                    // NOW check the 3rd byte to see if it's a system command
                                     case (uart_byte)
-                                        8'h00: begin //normal mode
-                                            debug_listen <= 0;
-                                            debug_mode <= 0;
-                                            byte_counter <= 0;
-                                        end
-                                        
-                                        8'h01: begin
-                                            debug_listen <= 0;
-                                            debug_mode <= 1;
-                                            byte_counter <= 0;
-                                        end
+                                            8'hF2: begin // End programming, keep PC
+                                                programming_active_reg <= 0;
+                                                state <= debug_mode ? DEBG : IDLE;
+                                            end
+                                            8'hF3: begin // End programming, reset PC
+                                                reset_pc_req <= 1;
+                                                state <= PROG;
+                                            end
+                                            8'hF4: begin
+                                                debug_display <= 0;
+                                            end
+                                            8'hF5: begin
+                                                debug_display <= 1;
+                                            end
+                                            default: begin
+                                                // Not a system command; pass the 3-byte window as an instruction!
+                                                inst_packet <= {uart_byte, temp_packet[15:8], temp_packet[7:0]};
+                                                inst_packet_ready <= 1;
+                                            end
                                     endcase
-                                end //debug_listen 
-                                else begin
-                                    inst_byte <= uart_byte;
-                                    inst_byte_ready <= 1;
-                                    byte_counter <= 2;
-                                end //!debug_listen
-                            end //byte_counter == 1
-                            else begin
-                                inst_byte <= uart_byte;
-                                inst_byte_ready <= 1;
-                                byte_counter <= 0;
-                            end //byte_counter == 2
-                        end // PROG state
+                                end
+                            endcase
+                        end
                         
                         DEBG: begin
                             case (uart_byte)
-                                8'h00: begin //run in normal mode
+                                8'h00: begin
                                     if (debug_listen) begin 
                                         debug_listen <= 0;
                                         debug_mode <= 0;
                                         state <= IDLE;
-                                    end // debug_listen
+                                    end
                                 end
-                                
-                                8'h01: begin //run in debug mode
+                                8'h01: begin
                                     if (debug_listen) begin
                                         debug_mode <= 1;
                                         debug_listen <= 0;
                                     end
                                 end
-                                
-                                8'hF4: begin //MMIO display
-                                    debug_display <= 0;
-                                    byte_counter <= 0;
-                                end
-                                
-                                8'hF5: begin //REG display
-                                    debug_display <= 1;
-                                    byte_counter <= 0;
-                                end
-                                
-                                8'hF6: begin 
-                                    debug_listen <= 1;
-                                end
-                                
-                                8'hF7: begin 
-                                    if (!reset_pc_req)
-                                        reset_pc_req <= 1;
-                                end
-                                
-                                8'hF8: begin //Step PC
-                                    if (!step_cpu_req)
-                                        step_cpu_req <= 1;
-                                end
-                            endcase // uart_byte
-                        end // DEBG state
-                        
-                    endcase //state
-                end else begin//byte_ready & !uart_byte_ack
-                    if (!byte_ready & uart_byte_ack) uart_byte_ack <= 0;
+                                8'hF4: debug_display <= 0;
+                                8'hF5: debug_display <= 1;
+                                8'hF6: debug_listen <= 1;
+                                8'hF7: begin if (!reset_pc_req) reset_pc_req <= 1; end
+                                8'hF8: begin if (!step_cpu_req) step_cpu_req <= 1; end
+                                default: begin end
+                            endcase
+                        end
+                    endcase
                 end 
-            end //!inst_packet_ready
-        end //!rst
-    end //posedge clk
+                else begin
+                    if (!byte_ready & uart_byte_ack) 
+                        uart_byte_ack <= 0;
+                end 
+            end
+        end
+    end
     
     assign programming_active = programming_active_reg;
     

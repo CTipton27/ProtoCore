@@ -15,7 +15,7 @@ try:
         print("Connected...")
         reset_pc = input("Reset program counter after write? y/n: ")
         display = input ("Display mode (reg / mmio): ")
-        ser.write(bytes([0xF1]))
+        ser.write(bytes([0x00, 0x00, 0xF1]))
         time.sleep(0.005)
         print("0xF1 - Begin write")
         with open(mem_src, "r") as mem_file:
@@ -34,20 +34,20 @@ try:
 
         #send display_mode parameter
         if display.lower().strip() == "reg":
-            ser.write(bytes([0xF5]))
+            ser.write(bytes([0x00, 0x00, 0xF5]))
             time.sleep(0.005)
             print("0xF5 - Register display mode")
         elif display.lower().strip() == "mmio":
-            ser.write(bytes([0xF4]))
+            ser.write(bytes([0x00, 0x00, 0xF4]))
             time.sleep(0.005)
             print("0xF4 - MMIO display mode")
 
         #Send reset_pc parameter
         if reset_pc.lower().strip() == "y":
-            ser.write(bytes([0xF3]))
+            ser.write(bytes([0x00, 0x00, 0xF3]))
             print("0xF3 - Reset PC")
         else:
-            ser.write(bytes([0xF2]))
+            ser.write(bytes([0x00, 0x00, 0xF2]))
             print("0xF2 - Maintain PC")
 
 except serial.SerialException as e:

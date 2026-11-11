@@ -12,6 +12,13 @@ module ram(
     );
     reg [7:0] mem [255:0];
     
+    
+    integer i;
+    initial begin
+        for (i = 0; i < 256; i = i+1)
+            mem[i] = 8'h00; //initialize values to 0
+    end
+    
     always @ (posedge clk) begin
         if (write_en) mem[addr_cpu] <= write_data;
     end
