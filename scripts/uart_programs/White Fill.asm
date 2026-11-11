@@ -1,9 +1,10 @@
-	ADDI R1, R0, u255       ; Start counter at 255
 	ADDI R2, R0, u255       ; Reference bit value 0xFF
 
+pre_fill:
+    ADDI R1, R0, u255       ; Start counter at 255
 mem_fill:
     STORE R1, R2, 0         ; RAM[R1] = 0xFF
-    
+
     ; Check if we just hit 0 before decrementing
     BEQ R1, R0, send_frame  ; If R1 was already 0, we are done filling
     DEC R1                  ; Otherwise decrement
@@ -20,5 +21,5 @@ check_frame:
     ADDI R3, R0, FMT_64x32_1BPP
     STORE R0, R0, MMIO_VRAM_AD   ; Tell VRAM to start fetching from address 0 in RAM
     STORE R0, R3, MMIO_GPHC_ST   ; Trigger frame capture
-    
-    RJMP mem_fill                ; Loop back to refill/re-render
+
+    RJMP pre_fill                ; Loop back to refill/re-render
