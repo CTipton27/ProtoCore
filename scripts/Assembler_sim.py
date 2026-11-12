@@ -1,11 +1,17 @@
 import re
+import sys
 from pathlib import Path
 
 root = Path(__file__).resolve().parent.parent
 script_dir = root / "scripts"
 src_dir = root / "src"
 
-assembly_src = script_dir / "Program.asm"
+# Allow passing a specific .asm file via command line, default to Program.asm
+if len(sys.argv) > 1:
+    assembly_src = Path(sys.argv[1]).resolve()
+else:
+    assembly_src = script_dir / "Program.asm"
+
 sim_src = src_dir / "program.txt"
 
 formats = {
@@ -74,7 +80,6 @@ def reg_to_bin(reg):
 def imm_to_bin(val):
     if isinstance(val, str):
         val_str = val.strip()
-        # Handle explicit unsigned prefix 'u' or 'U' (e.g., "u255", "u0xFF")
         if val_str.lower().startswith('u'):
             val = int(val_str[1:], 0)
         else:
@@ -82,11 +87,9 @@ def imm_to_bin(val):
     else:
         val = int(val)
 
-    # Handle negative numbers (two's complement in 8 bits)
     if val < 0:
         val = val & 0xFF
 
-    # Validate that it fits in an 8-bit field (0 to 255)
     if not (0 <= val <= 255):
         raise ValueError(f"Immediate out of range ({val})")
 

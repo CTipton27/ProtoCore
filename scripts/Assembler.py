@@ -1,12 +1,15 @@
 import re
+import sys
 from pathlib import Path
 
 root = Path(__file__).resolve().parent.parent
 script_dir = root / "scripts"
-src_dir = root / "src"
 
-assembly_src = script_dir / "Program.asm"
-mem_src = src_dir / "program.mem"
+# Accept input file from command-line argument if provided, otherwise default to Program.asm
+if len(sys.argv) > 1:
+    assembly_src = Path(sys.argv[1]).resolve()
+else:
+    assembly_src = script_dir / "Program.asm"
 
 formats = {
     "ADD":   {"format":["rd","ra","rb"],  "opcode":"0000"},
@@ -74,7 +77,6 @@ def reg_to_bin(reg):
 def imm_to_bin(val):
     if isinstance(val, str):
         val_str = val.strip()
-        # Handle explicit unsigned prefix 'u' or 'U' (e.g., "u255", "u0xFF")
         if val_str.lower().startswith('u'):
             val = int(val_str[1:], 0)
         else:
@@ -82,11 +84,9 @@ def imm_to_bin(val):
     else:
         val = int(val)
 
-    # Handle negative numbers (two's complement in 8 bits)
     if val < 0:
         val = val & 0xFF
 
-    # Validate that it fits in an 8-bit field (0 to 255)
     if not (0 <= val <= 255):
         raise ValueError(f"Immediate out of range ({val})")
 
@@ -125,15 +125,14 @@ constants = {
     "MMIO_VRAM_AD": "0x0106",
 
     # Formats with Trigger (Bit 7 = 1) + Format (Bits 6:4 = 1-7)
-    # Layout: 1XXX 0000 (Binary) -> Hex values 0x80 to 0x70 shifted
-    "FMT_OFF"       : "0x00",  # 0000 0000
-    "FMT_32x32_1BPP": "0x90",  # 1001 0000 (Trigger + Format 1)
-    "FMT_32x16_2BPP": "0xA0",  # 1010 0000 (Trigger + Format 2)
-    "FMT_16x16_4BPP": "0xB0",  # 1011 0000 (Trigger + Format 3)
-    "FMT_64x32_1BPP": "0xC0",  # 1100 0000 (Trigger + Format 4)
-    "FMT_32x32_2BPP": "0xD0",  # 1101 0000 (Trigger + Format 5)
-    "FMT_32x16_4BPP": "0xE0",  # 1110 0000 (Trigger + Format 6)
-    "FMT_16x16_8BPP": "0xF0",  # 1111 0000 (Trigger + Format 7)
+    "FMT_OFF"       : "0x00",
+    "FMT_32x32_1BPP": "0x90",
+    "FMT_32x16_2BPP": "0xA0",
+    "FMT_16x16_4BPP": "0xB0",
+    "FMT_64x32_1BPP": "0xC0",
+    "FMT_32x32_2BPP": "0xD0",
+    "FMT_32x16_4BPP": "0xE0",
+    "FMT_16x16_8BPP": "0xF0",
 }
 program = []
 
@@ -141,12 +140,10 @@ pc = 0
 
 with open(assembly_src) as src:
     for line in src:
-        # Remove all comments
         line = line.split(";")[0].strip()
         if not line:
             continue
 
-        # Collect all constants
         if line.lower().startswith(".equ"):
             _, name, value = [t.strip() for t in re.split(r"[,\s]+", line) if t]
 
@@ -156,7 +153,6 @@ with open(assembly_src) as src:
             constants[name] = value
             continue
 
-        # Keep consuming labels until there aren't any left.
         while ":" in line:
             label, remainder = line.split(":", 1)
             label = label.strip()
@@ -167,7 +163,6 @@ with open(assembly_src) as src:
             labels[label] = pc
             line = remainder.strip()
 
-        # If there's still text, it's an instruction, tokenize it and continue.
         if line:
             tokens = [t for t in re.split(r"[,\s]+", line) if t]
             expanded = expand_instruction(tokens)
@@ -175,88 +170,78 @@ with open(assembly_src) as src:
             pc += len(expanded)
 
 # ----------------------------
-# PASS 2
+# PASS 2 (Outputs directly to stdout for piping)
 # ----------------------------
 
-with open(mem_src, "w") as mem:
-    for pc, tokens in enumerate(program):
-        mnemonic = tokens[0]
+for pc, tokens in enumerate(program):
+    mnemonic = tokens[0]
 
-        # Ensure all commands are valid
-        if mnemonic not in formats:
-            raise ValueError(f"Unknown instruction '{mnemonic}'")
+    if mnemonic not in formats:
+        raise ValueError(f"Unknown instruction '{mnemonic}'")
 
-        opcode = formats[mnemonic]["opcode"]
+    opcode = formats[mnemonic]["opcode"]
 
-        rd_bin = "0000"
-        ra_bin = "0000"
-        rb_bin = "0000"
-        imm_bin = "00000000"
+    rd_bin = "0000"
+    ra_bin = "0000"
+    rb_bin = "0000"
+    imm_bin = "00000000"
 
-        operands = tokens[1:]
-        expected = formats[mnemonic]["format"]
+    operands = tokens[1:]
+    expected = formats[mnemonic]["format"]
 
-        if len(operands) != len(expected):
-            raise ValueError(f"{mnemonic}: wrong number of operands")
+    if len(operands) != len(expected):
+        raise ValueError(f"{mnemonic}: wrong number of operands")
 
-        # 1. First pass over operands to resolve immediate/address for mem_space check
-        mem_space = 0
-        for operand_type, operand in zip(expected, operands):
-            if operand in constants:
-                operand = constants[operand]
+    mem_space = 0
+    for operand_type, operand in zip(expected, operands):
+        if operand in constants:
+            operand = constants[operand]
 
-            if operand_type == "imm":
-                if operand in labels:
-                    val_check = labels[operand]
-                    if formats[mnemonic].get("pc_relative", False):
-                        val_check -= (pc + 1)
-                else:
-                    val_check = operand
+        if operand_type == "imm":
+            if operand in labels:
+                val_check = labels[operand]
+                if formats[mnemonic].get("pc_relative", False):
+                    val_check -= (pc + 1)
+            else:
+                val_check = operand
 
-                try:
-                    int_val = int(str(val_check), 0)
-                except ValueError:
-                    int_val = 0
+            try:
+                int_val = int(str(val_check), 0)
+            except ValueError:
+                int_val = 0
 
-                # Logical addresses >= 256 (0x0100) set mem_space = 1
-                if int_val >= 0x0100:
-                    mem_space = 1
+            if int_val >= 0x0100:
+                mem_space = 1
 
-        # 2. Standard operand encoding
-        for operand_type, operand in zip(expected, operands):
-            # Register Aliasing
-            if operand in constants:
-                operand = constants[operand]
+    for operand_type, operand in zip(expected, operands):
+        if operand in constants:
+            operand = constants[operand]
 
-            if operand_type == "rd":
-                rd_bin = reg_to_bin(operand)
-            elif operand_type == "ra":
-                ra_bin = reg_to_bin(operand)
-            elif operand_type == "rb":
-                rb_bin = reg_to_bin(operand)
-            elif operand_type == "imm":
-                if operand in labels:
-                    value = labels[operand]
-                    if formats[mnemonic].get("pc_relative", False):
-                        value -= (pc + 1)
-                elif operand in constants:
-                    value = constants[operand]
-                else:
-                    value = operand
+        if operand_type == "rd":
+            rd_bin = reg_to_bin(operand)
+        elif operand_type == "ra":
+            ra_bin = reg_to_bin(operand)
+        elif operand_type == "rb":
+            rb_bin = reg_to_bin(operand)
+        elif operand_type == "imm":
+            if operand in labels:
+                value = labels[operand]
+                if formats[mnemonic].get("pc_relative", False):
+                    value -= (pc + 1)
+            elif operand in constants:
+                value = constants[operand]
+            else:
+                value = operand
 
-                # Mask memory addresses/immediates to lower 8 bits for physical offset
-                if mnemonic in ["LOAD", "STORE"]:
-                    numeric_val = int(str(value), 0)
-                    value = numeric_val & 0xFF
+            if mnemonic in ["LOAD", "STORE"]:
+                numeric_val = int(str(value), 0)
+                value = numeric_val & 0xFF
 
-                imm_bin = imm_to_bin(value)
+            imm_bin = imm_to_bin(value)
 
-        # 3. Inject mem_space attribute bit into unused register fields for LOAD/STORE
-        if mnemonic == "STORE":
-            # STORE uses rd slot's LSB (instruction[16]) for mem_space
-            rd_bin = f"000{mem_space}"
-        elif mnemonic == "LOAD":
-            # LOAD uses rb slot's LSB (instruction[8]) for mem_space
-            rb_bin = f"000{mem_space}"
+    if mnemonic == "STORE":
+        rd_bin = f"000{mem_space}"
+    elif mnemonic == "LOAD":
+        rb_bin = f"000{mem_space}"
 
-        mem.write(f"{opcode}{rd_bin}{ra_bin}{rb_bin}{imm_bin}\n")
+    sys.stdout.write(f"{opcode}{rd_bin}{ra_bin}{rb_bin}{imm_bin}\n")
